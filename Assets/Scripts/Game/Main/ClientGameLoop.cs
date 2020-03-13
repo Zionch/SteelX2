@@ -1,6 +1,14 @@
 ﻿
 public class ClientGameLoop : Game.IGameLoop
 {
+    private enum ClientState
+    {
+        Connecting,
+        Loading,
+        Playing,
+        Leaving,
+    }
+
     public bool Init(string[] args) {
         return true;
     }

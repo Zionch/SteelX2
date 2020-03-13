@@ -1,6 +1,13 @@
 ﻿
 public class ServerGameLoop : Game.IGameLoop
 {
+    private enum ServerState
+    {
+        Connecting,
+        Loading,
+        Active,
+    }
+
     public bool Init(string[] args) {
         return true;
     }
