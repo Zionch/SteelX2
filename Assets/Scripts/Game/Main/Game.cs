@@ -1,6 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [DefaultExecutionOrder(-1000)]
 public class Game : MonoBehaviour
@@ -28,6 +31,7 @@ public class Game : MonoBehaviour
         IsHeadless = commandLineArgs.Contains("-batchmode");
 #endif
         InitConsole(IsHeadless, commandLineArgs);
+        RegisterCommands();
 
         Console.SetOpen(true);
     }
@@ -128,12 +132,54 @@ public class Game : MonoBehaviour
         _errorState = true;
     }
 
+    public void RequestGameLoop(System.Type type, string[] args) {
+        GameDebug.Assert(typeof(IGameLoop).IsAssignableFrom(type));
+
+        _requestedGameLoopTypes.Add(type);
+        _requestedGameLoopArgs.Add(args);
+        GameDebug.Log("Game loop " + type + " requested");
+    }
+
     private void ShutdownGameLoops() {
         foreach (var gameLoop in _gameLoops) {
             gameLoop.Shutdown();
         }
     }
 
+    private void OnDestroy() {
+        Console.RemoveCommandsWithTag(this.GetHashCode());
+    }
+
+    //Commands
+    //=======================================================
+    private void RegisterCommands() {
+        Console.AddCommand("serve", CmdServe, "Start server listening", this.GetHashCode());
+        Console.AddCommand("client", CmdClient, "client: Enter client mode.", this.GetHashCode());
+        Console.AddCommand("boot", CmdBoot, "Go back to boot loop", this.GetHashCode());
+
+        Console.AddCommand("quit", CmdQuit, "Quits", this.GetHashCode());
+    }
+
+    private void CmdClient(string[] args) {
+        RequestGameLoop(typeof(ClientGameLoop), args);
+    }
+
+    private void CmdServe(string[] args) {
+        RequestGameLoop(typeof(ServerGameLoop), args);
+    }
+
+    void CmdBoot(string[] args) {
+        ShutdownGameLoops();
+    }
+
+    private void CmdQuit(string[] args) {
+#if UNITY_EDITOR
+        EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+    //=======================================================
     public static bool IsHeadless { get; private set; }
     private bool _errorState;
 
