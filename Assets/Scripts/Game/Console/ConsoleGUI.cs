@@ -13,7 +13,7 @@ public class ConsoleGUI : MonoBehaviour, IConsoleUI
     }
 
     public void Init() {
-        //buildIdText.text = Game.Instance.buildId + " (" + Application.unityVersion + ")";
+        buildIdText.text = "(" + Application.unityVersion + ")";
     }
 
     public void Shutdown() {

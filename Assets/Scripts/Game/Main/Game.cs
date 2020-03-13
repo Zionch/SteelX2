@@ -18,6 +18,18 @@ public class Game : MonoBehaviour
 
     private void Awake() {
         Instance = this;
+
+        ConfigVar.Init();
+
+        var commandLineArgs = new List<string>(System.Environment.GetCommandLineArgs());
+#if UNITY_STANDALONE_LINUX || UNITY_SERVER
+        IsHeadless = true;
+#else
+        IsHeadless = commandLineArgs.Contains("-batchmode");
+#endif
+        InitConsole(IsHeadless, commandLineArgs);
+
+        Console.SetOpen(true);
     }
 
     private void Update()
@@ -46,6 +58,9 @@ public class Game : MonoBehaviour
 
                 GameDebug.Log("Game loop initialization failed ... reverting to boot loop");
             }
+
+            _requestedGameLoopArgs.Clear();
+            _requestedGameLoopTypes.Clear();
         }
 
         try {
@@ -58,8 +73,7 @@ public class Game : MonoBehaviour
             HandleGameloopException(e);
         }
 
-        _requestedGameLoopArgs.Clear();
-        _requestedGameLoopTypes.Clear();
+        Console.ConsoleUpdate();
     }
 
     private void FixedUpdate() {
@@ -84,9 +98,31 @@ public class Game : MonoBehaviour
         } catch (System.Exception e) {
             HandleGameloopException(e);
         }
+
+        Console.ConsoleLateUpdate();
     }
 
-    void HandleGameloopException(System.Exception e) {
+    private void InitConsole(bool isHeadless, List<string> commandLineArgs) {
+        if (IsHeadless) {
+#if UNITY_STANDALONE_WIN
+            string consoleTitle = "SteelX" + " [" + System.Diagnostics.Process.GetCurrentProcess().Id + "]";
+            var consoleRestoreFocus = commandLineArgs.Contains("-consolerestorefocus");
+
+            var consoleUI = new ConsoleTextWin(consoleTitle, consoleRestoreFocus);
+#elif UNITY_STANDALONE_LINUX
+            var consoleUI = new ConsoleTextLinux();
+#else
+            UnityEngine.Debug.Log("WARNING: starting without a console");
+            var consoleUI = new ConsoleNullUI();
+#endif
+            Console.Init(consoleUI);
+        } else {//in-game UI
+            var consoleUI = Instantiate(Resources.Load<ConsoleGUI>("Prefabs/ConsoleGUI"));
+            Console.Init(consoleUI);
+        }
+    }
+
+    private void HandleGameloopException(System.Exception e) {
         GameDebug.Log("EXCEPTION " + e.Message + "\n" + e.StackTrace);
         Console.SetOpen(true);
         _errorState = true;
@@ -98,6 +134,7 @@ public class Game : MonoBehaviour
         }
     }
 
+    public static bool IsHeadless { get; private set; }
     private bool _errorState;
 
     private List<IGameLoop> _gameLoops = new List<IGameLoop>();

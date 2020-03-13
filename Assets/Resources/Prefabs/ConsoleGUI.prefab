@@ -64,7 +64,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: 6d4559f0222873841aa9269b72b01c21, type: 3}
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 0
@@ -141,7 +141,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: 6d4559f0222873841aa9269b72b01c21, type: 3}
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 0
@@ -752,7 +752,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   panel: {fileID: 224940446302577990}
   input_field: {fileID: 114225940033063086}
-  text_area: {fileID: 114665525935706046}
+  text_area: {fileID: 114263740347123274}
   text_area_background: {fileID: 114789097906752952}
   toggle_console_key: 282
   buildIdText: {fileID: 114390190176678946}
