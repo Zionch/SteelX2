@@ -5,21 +5,48 @@ using System;
 using System.Collections.Generic;
 
 public abstract class PhotonNetworkTransport : INetworkTransport, IConnectionCallbacks, IOnEventCallback, IInRoomCallbacks, IMatchmakingCallbacks
-{ 
-    protected bool IsBlockPackages;//simulate disconnected
+{
     protected const string testRoom = "test";
 
-    public virtual void Connect() {
-        IsBlockPackages = false;
-    }
-
-    public virtual void Disconnect() {
-        IsBlockPackages = true;
-    }
-    
     public PhotonNetworkTransport() {
         PhotonNetwork.AddCallbackTarget(this);
+
+        PhotonNetwork.SendRate = 30;
+        PhotonNetwork.SerializationRate = 30;
     }
+
+    //client wait server to send a connect event to him, so client won't send anything if server isn't joined
+    public void Connect() {
+        //this is for starting game directly , not through lobby->room
+        if (!PhotonNetwork.IsConnected) {
+            PhotonNetwork.ConnectUsingSettings();
+        }
+    }
+
+    public void Disconnect() {
+        transportEvents.Enqueue(new TransportEvent(TransportEvent.Type.Disconnect, PhotonNetwork.LocalPlayer.ActorNumber, null));
+
+        Shutdown();
+    }
+    
+    public bool NextEvent(ref TransportEvent e) {
+        if (transportEvents.Count > 0) {
+            e = transportEvents.Dequeue();
+            return true;
+        }
+        return false;
+    }
+
+    public virtual string GetConnectionDescription(int connectionId) {
+        if(PhotonNetwork.IsConnected || PhotonNetwork.InRoom) {
+            return "Not connected";
+        } else {
+            return $"Region : {PhotonNetwork.CloudRegion}, Room name : {PhotonNetwork.CurrentRoom.Name}, " +
+                $"ConnectionId : {PhotonNetwork.LocalPlayer.ActorNumber}, IsMasterClient : {PhotonNetwork.IsMasterClient}";
+        }
+    }
+
+    public abstract void SendData(int connectionId, TransportEvent.Type type, byte[] data);
 
     public virtual void Shutdown() {
         PhotonNetwork.RemoveCallbackTarget(this);
@@ -29,26 +56,7 @@ public abstract class PhotonNetworkTransport : INetworkTransport, IConnectionCal
         }
     }
 
-    public string GetConnectionDescription(int connectionId) {
-        if(PhotonNetwork.IsConnected || PhotonNetwork.InRoom) {
-            return "Not connected";
-        } else {
-            return $"Region : {PhotonNetwork.CloudRegion}, Room name : {PhotonNetwork.CurrentRoom.Name}, " +
-                $"ConnectionId : {PhotonNetwork.LocalPlayer.ActorNumber}, IsMasterClient : {PhotonNetwork.IsMasterClient}";
-        }
-    }
-
-    public bool NextEvent(ref TransportEvent e) {
-        if(transportEvents.Count > 0) {
-            e = transportEvents.Dequeue();
-            return true;
-        }
-        return false;
-    }
-
-    public abstract void SendData(int connectionId, TransportEvent.Type type, byte[] data);
-
-    public void Update() {
+    public virtual void Update() {
     }
 
     //Photon interface
@@ -57,11 +65,18 @@ public abstract class PhotonNetworkTransport : INetworkTransport, IConnectionCal
     }
 
     public virtual void OnConnectedToMaster() {
-        Console.Write("Connected to master");
+        GameDebug.Log("Connected to master");
+
+        //this is for starting game directly , not through lobby->room
+        if (!PhotonNetwork.InRoom) {
+            PhotonNetwork.JoinOrCreateRoom(testRoom, new RoomOptions(), TypedLobby.Default);
+        }
     }
 
     public virtual void OnDisconnected(DisconnectCause cause) {
-        Console.Write("Disconnected due to : " + cause.ToString());
+        GameDebug.Log("Disconnected due to : " + cause.ToString());
+
+        transportEvents.Enqueue(new TransportEvent(TransportEvent.Type.Disconnect, PhotonNetwork.LocalPlayer.ActorNumber, null));
     }
 
     public abstract void OnEvent(EventData photonEvent);
@@ -119,30 +134,9 @@ public abstract class PhotonNetworkTransport : INetworkTransport, IConnectionCal
 
 public class ClientPhotonNetworkTransport : PhotonNetworkTransport
 {
-    public override void Connect() {
-        base.Connect();
-        //wait server to send a connect event to this player
-
-        //this is for starting game directly , not through lobby->room
-        if (!PhotonNetwork.IsConnected) {
-            PhotonNetwork.ConnectUsingSettings();
-        }
-    }
-
-    public override void OnConnectedToMaster() {
-        base.OnConnectedToMaster();
-
-        //this is for starting game directly , not through lobby->room
-        if (!PhotonNetwork.InRoom) {
-            PhotonNetwork.JoinOrCreateRoom(testRoom, new RoomOptions(), TypedLobby.Default);
-        }
-    }
-
     public override void OnEvent(EventData photonEvent) {
-        if (IsBlockPackages) return;
-
         TransportEvent transportEvent = new TransportEvent();
-        if (Enum.IsDefined(typeof(TransportEvent.Type), photonEvent.Code)) {
+        if (Enum.IsDefined(typeof(TransportEvent.Type), (TransportEvent.Type)photonEvent.Code)) {
             transportEvent.type = (TransportEvent.Type)photonEvent.Code;
             transportEvent.ConnectionId = PhotonNetwork.LocalPlayer.ActorNumber;
         } else {//we may also receive some photon internal events
@@ -157,8 +151,6 @@ public class ClientPhotonNetworkTransport : PhotonNetworkTransport
     }
 
     public override void SendData(int connectionId, TransportEvent.Type type, byte[] data) {
-        if (IsBlockPackages) return;
-
         RaiseEventOptions options = new RaiseEventOptions() {
             Receivers = ReceiverGroup.MasterClient
         };
@@ -168,29 +160,9 @@ public class ClientPhotonNetworkTransport : PhotonNetworkTransport
 
 public class ServerPhotonNetworkTransport : PhotonNetworkTransport, IMatchmakingCallbacks
 {
-    public override void Connect() {
-        base.Connect();
-
-        //this is for starting game directly , not through lobby->room
-        if (!PhotonNetwork.IsConnected) {
-            PhotonNetwork.ConnectUsingSettings();
-        }
-    }
-
-    public override void OnConnectedToMaster() {
-        base.OnConnectedToMaster();
-
-        //this is for starting game directly , not through lobby->room
-        if (!PhotonNetwork.InRoom) {
-            PhotonNetwork.JoinOrCreateRoom(testRoom, new RoomOptions(), TypedLobby.Default);
-        }
-    }
-
     public override void OnEvent(EventData photonEvent) {
-        if (IsBlockPackages) return;
-
         TransportEvent transportEvent = new TransportEvent();
-        if (Enum.IsDefined(typeof(TransportEvent.Type), photonEvent.Code)) {
+        if (Enum.IsDefined(typeof(TransportEvent.Type), (TransportEvent.Type)photonEvent.Code)) {
             transportEvent.type = (TransportEvent.Type)photonEvent.Code;
             transportEvent.ConnectionId = photonEvent.Sender;
         } else {//we may also receive some photon internal events
@@ -210,6 +182,11 @@ public class ServerPhotonNetworkTransport : PhotonNetworkTransport, IMatchmaking
         if (!PhotonNetwork.IsMasterClient) {
             GameDebug.Log("Request to be the master client");
             PhotonNetwork.SetMasterClient(PhotonNetwork.LocalPlayer);
+        }
+
+        //trigger connect event foreach player
+        foreach(var player in PhotonNetwork.PlayerListOthers) {
+            transportEvents.Enqueue(new TransportEvent(TransportEvent.Type.Connect, player.ActorNumber, null));
         }
     }
 
@@ -231,8 +208,6 @@ public class ServerPhotonNetworkTransport : PhotonNetworkTransport, IMatchmaking
     }
 
     public override void SendData(int connectionId, TransportEvent.Type type, byte[] data) {
-        if (IsBlockPackages) return;
-
         RaiseEventOptions options = new RaiseEventOptions() {
             TargetActors = new int[] { connectionId }
         };
