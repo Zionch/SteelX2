@@ -22,15 +22,18 @@ public class Game : MonoBehaviour
     private void Awake() {
         Instance = this;
 
-        ConfigVar.Init();
+        ConfigVar.Init();  
 
         var commandLineArgs = new List<string>(System.Environment.GetCommandLineArgs());
 #if UNITY_STANDALONE_LINUX || UNITY_SERVER
         IsHeadless = true;
 #else
         IsHeadless = commandLineArgs.Contains("-batchmode");
+        QualitySettings.vSyncCount = 0;//need to make the target frame rate work even in headless mode
 #endif
         InitConsole(IsHeadless, commandLineArgs);
+        Application.targetFrameRate = 30;
+
         RegisterCommands();
 
         Console.SetOpen(true);
@@ -148,6 +151,7 @@ public class Game : MonoBehaviour
 
     private void OnDestroy() {
         Console.RemoveCommandsWithTag(this.GetHashCode());
+        Console.Shutdown();
     }
 
     //Commands
