@@ -9,11 +9,20 @@ public class ClientGameLoop : Game.IGameLoop
         Leaving,
     }
 
+    private NetworkClient _networkClient;
+
     public bool Init(string[] args) {
+        _networkClient = new NetworkClient(new ClientPhotonNetworkTransport());
+
+        _networkClient.Connect();
+
         return true;
     }
 
     public void Update() {
+        _networkClient.Update();
+
+        _networkClient.SendData();
     }
 
     public void FixedUpdate() {
@@ -23,6 +32,7 @@ public class ClientGameLoop : Game.IGameLoop
     }
 
     public void Shutdown() {
+        _networkClient.Disconnect();
     }
 }
 
