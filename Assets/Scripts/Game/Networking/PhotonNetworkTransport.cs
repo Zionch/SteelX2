@@ -6,13 +6,11 @@ using System.Collections.Generic;
 
 public abstract class PhotonNetworkTransport : INetworkTransport, IConnectionCallbacks, IOnEventCallback, IInRoomCallbacks, IMatchmakingCallbacks
 {
-    protected const string testRoom = "test";
-
     public PhotonNetworkTransport() {
         PhotonNetwork.AddCallbackTarget(this);
 
-        PhotonNetwork.SendRate = 30;
-        PhotonNetwork.SerializationRate = 30;
+        PhotonNetwork.SendRate = NetworkConfig.PhotonSendRate;
+        PhotonNetwork.SerializationRate = NetworkConfig.PhotonSerializeRate;
     }
 
     //client wait server to send a connect event to him, so client won't send anything if server isn't joined
@@ -69,14 +67,14 @@ public abstract class PhotonNetworkTransport : INetworkTransport, IConnectionCal
 
         //this is for starting game directly , not through lobby->room
         if (!PhotonNetwork.InRoom) {
-            PhotonNetwork.JoinOrCreateRoom(testRoom, new RoomOptions(), TypedLobby.Default);
+            PhotonNetwork.JoinOrCreateRoom(NetworkConfig.TestRoomName, new RoomOptions(), TypedLobby.Default);
         }
     }
 
     public virtual void OnDisconnected(DisconnectCause cause) {
         GameDebug.Log("Disconnected due to : " + cause.ToString());
 
-        transportEvents.Enqueue(new TransportEvent(TransportEvent.Type.Disconnect, PhotonNetwork.LocalPlayer.ActorNumber, null));
+        Disconnect();
     }
 
     public abstract void OnEvent(EventData photonEvent);

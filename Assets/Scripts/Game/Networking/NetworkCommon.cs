@@ -28,3 +28,9 @@ public interface INetworkTransport
     void Update();
 }
 
+public static class NetworkConfig
+{
+    public const string TestRoomName = "_test";
+    public const int PhotonSendRate = 30;
+    public const int PhotonSerializeRate = 30;
+}
