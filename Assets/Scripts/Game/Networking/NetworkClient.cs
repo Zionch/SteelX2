@@ -16,6 +16,13 @@ public class NetworkClient
         public int serverUpdateInterval;        // requested tick / update
     }
 
+    public class Counters : NetworkConnectionCounters
+    {
+        public int snapshotsIn;             // Total number of snapshots received
+        public int fullSnapshotsIn;         // Number of snapshots without a baseline
+        public int commandsOut;             // Number of command messages sent
+    }
+
     private INetworkTransport _transport;
     private ClientConfig _clientConfig;
     private ClientConnection _clientConnection;
@@ -92,7 +99,7 @@ public class NetworkClient
         _clientConnection = null;
     }
 
-    private class ClientConnection : NetworkConnection<PackageInfo>
+    private class ClientConnection : NetworkConnection<PackageInfo, NetworkClient.Counters>
     {
         private ClientConfig _clientConfig;
 
@@ -100,9 +107,9 @@ public class NetworkClient
         }
 
         public void ReadPackage(byte[] packageData) {
-            GameDebug.Log("read package");
-            NetworkMessage content;
+            counters.bytesIn += packageData.Length;
 
+            NetworkMessage content;
             int headerSize;
             var packageSequence = ProcessPackageHeader(packageData, out content, out headerSize);
 

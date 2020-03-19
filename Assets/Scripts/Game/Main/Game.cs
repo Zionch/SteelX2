@@ -10,6 +10,10 @@ public class Game : MonoBehaviour
 {
     public static Game Instance { get; private set; }
 
+    [ConfigVar(Name = "server.tickrate", DefaultValue = "60", Description = "Tickrate for server", Flags = ConfigVar.Flags.ServerInfo)]
+    public static ConfigVar serverTickRate;
+
+    public static double frameTime;
     public interface IGameLoop
     {
         bool Init(string[] args);

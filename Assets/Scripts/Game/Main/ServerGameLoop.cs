@@ -12,7 +12,7 @@ public class ServerGameLoop : Game.IGameLoop
 
     public bool Init(string[] args) {
         _networkServer = new NetworkServer(new ServerPhotonNetworkTransport());
-
+        _networkStatistics = new NetworkStatisticsServer(_networkServer);
         _networkServer.Connect();
 
         return true;
@@ -22,6 +22,8 @@ public class ServerGameLoop : Game.IGameLoop
         _networkServer.Update();
 
         _networkServer.SendData();
+
+        _networkStatistics.Update();
     }
 
     public void FixedUpdate() {
@@ -33,5 +35,7 @@ public class ServerGameLoop : Game.IGameLoop
     public void Shutdown() {
         _networkServer.Shutdown();
     }
+
+    private NetworkStatisticsServer _networkStatistics;
 }
 

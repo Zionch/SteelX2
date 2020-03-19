@@ -38,3 +38,16 @@ public static class NetworkUtils
         return 0;
     }
 }
+
+public class Aggregator
+{
+    const int k_WindowSize = 120;
+
+    public float previousValue;
+    public FloatRollingAverage graph = new FloatRollingAverage(k_WindowSize);
+
+    public void Update(float value) {
+        graph.Update(value - previousValue);
+        previousValue = value;
+    }
+}

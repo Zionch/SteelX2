@@ -17,10 +17,43 @@ public class PackageInfo
     }
 }
 
-public class NetworkConnection<TPackageInfo> where TPackageInfo : PackageInfo, new()
+public class NetworkConnectionCounters
+{
+    public int bytesIn;                         // The number of user bytes received on this connection
+    public int bytesOut;                        // The number of user bytes sent on this connection
+
+    public int packagesIn;                      // The number of packages received on this connection
+    public int packagesOut;                     // The number of packages sent on this connection
+
+    public int packagesStaleIn;                 // The number of state packages we received
+    public int packagesDuplicateIn;             // The number of duplicate packages we received
+    public int packagesOutOfOrderIn;            // The number of packages we received out of order
+
+    public int packagesLostIn;                  // The number of incoming packages that was lost (i.e. holes in the package sequence)
+    public int packagesLostOut;                 // The number of outgoing packages that wasn't acked (either due to choke or network)
+
+    public Aggregator avgBytesIn = new Aggregator();
+    public Aggregator avgBytesOut = new Aggregator();
+    public Aggregator avgPackagesIn = new Aggregator();
+    public Aggregator avgPackagesOut = new Aggregator();
+    public Aggregator avgPackageSize = new Aggregator();
+
+    public void UpdateAverages() {
+        avgBytesIn.Update(bytesIn);
+        avgBytesOut.Update(bytesOut);
+        avgPackagesIn.Update(packagesIn);
+        avgPackagesOut.Update(packagesOut);
+    }
+}
+
+public class NetworkConnection<TPackageInfo, TCounters> where TPackageInfo : PackageInfo, new()
+    where TCounters : NetworkConnectionCounters, new()
 {
     public int ConnectionId;
     public INetworkTransport Transport;
+    public TCounters counters = new TCounters();
+
+    public int rtt;                                 // Round trip time (ping + time lost due to read/send frequencies)
 
     public int inSequence;                          // The highest sequence of packages we have received
     public ushort inSequenceAckMask;                // The mask describing which of the last packages we have received relative to inSequence
@@ -36,6 +69,7 @@ public class NetworkConnection<TPackageInfo> where TPackageInfo : PackageInfo, n
     }
 
     public int ProcessPackageHeader(byte[] packageData, out NetworkMessage content, out int headerSize) {
+        counters.packagesIn++;
         var input = new BitInputStream(packageData);
         
         headerSize = 0;
@@ -54,14 +88,14 @@ public class NetworkConnection<TPackageInfo> where TPackageInfo : PackageInfo, n
             var distance = inSequenceNew - inSequence;
             for (var i = 0; i < Math.Min(distance, 15); ++i)    // TODO : Fix this contant
             {
-                //if ((inSequenceAckMask & 1 << (15 - i)) == 0)
-                //    counters.packagesLostIn++;
+                if ((inSequenceAckMask & 1 << (15 - i)) == 0)
+                    counters.packagesLostIn++;
             }
 
             // If there is a really big hole then those packages are considered lost as well
             // Update the incoming ack mask.
             if (distance > 15) {
-                //counters.packagesLostIn += distance - 15;
+                counters.packagesLostIn += distance - 15;
                 inSequenceAckMask = 1; // all is lost except current package
             } else {
                 inSequenceAckMask <<= distance;
@@ -77,7 +111,7 @@ public class NetworkConnection<TPackageInfo> where TPackageInfo : PackageInfo, n
             var distance = inSequence - inSequenceNew;
             if (distance > 15) // TODO : Fix this constant
             {
-                //counters.packagesStaleIn++;
+                counters.packagesStaleIn++;
                 return 0;
             }
 
@@ -85,7 +119,7 @@ public class NetworkConnection<TPackageInfo> where TPackageInfo : PackageInfo, n
             var ackBit = 1 << distance;
             if ((ackBit & inSequenceAckMask) != 0) {
                 // Duplicate package
-                //counters.packagesDuplicateIn++;
+                counters.packagesDuplicateIn++;
                 return 0;
             }
 
@@ -94,7 +128,7 @@ public class NetworkConnection<TPackageInfo> where TPackageInfo : PackageInfo, n
             inSequenceAckMask |= (ushort)ackBit;
         } else {
             // Duplicate package
-            //counters.packagesDuplicateIn++;
+            counters.packagesDuplicateIn++;
             return 0;
         }
 
@@ -122,9 +156,7 @@ public class NetworkConnection<TPackageInfo> where TPackageInfo : PackageInfo, n
                 var info = outstandingPackages[sequence];
                 NotifyDelivered(sequence, info, false);
 
-                //counters.packagesLostOut++;
-                //if (info.fragmented)
-                //    counters.fragmentedPackagesLostOut++;
+                counters.packagesLostOut++;
 
                 info.Reset();
                 outstandingPackages.Remove(sequence);
@@ -156,8 +188,6 @@ public class NetworkConnection<TPackageInfo> where TPackageInfo : PackageInfo, n
         output.WriteBits(Sequence.ToUInt16(inSequence), 16);
         output.WriteBits(inSequenceAckMask, 16);
 
-        GameDebug.Log($"in {inSequence} out {outSequence}");
-
         info = outstandingPackages.Acquire(outSequence);
     }
 
@@ -175,6 +205,7 @@ public class NetworkConnection<TPackageInfo> where TPackageInfo : PackageInfo, n
 
         Transport.SendData(ConnectionId, TransportEvent.Type.Data, data);
 
+        counters.packagesOut++;
         ++outSequence;
     }
 

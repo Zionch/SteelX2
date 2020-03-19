@@ -15,6 +15,12 @@ public class NetworkServer
 
     }
 
+    public class Counters : NetworkConnectionCounters
+    {
+        public int snapshotsOut;
+        public int commandsIn;
+    }
+
     private ConnectionState _connectionState = ConnectionState.Disconnected;
 
     private INetworkTransport _transport;
@@ -100,12 +106,14 @@ public class NetworkServer
         Disconnect();
     }
 
-    private class ServerConnection : NetworkConnection<ServerPackageInfo>
+    public class ServerConnection : NetworkConnection<ServerPackageInfo, NetworkServer.Counters>
     {
         public ServerConnection(int connectionId, INetworkTransport transport) : base(connectionId, transport) {
         }
 
         public void ReadPackage(byte[] packageData) {
+            counters.bytesIn += packageData.Length;
+
             NetworkMessage content;
 
             int headerSize;
@@ -143,7 +151,7 @@ public class NetworkServer
             if (madeIt) {
                 if ((info.Content & NetworkMessage.ClientInfo) != 0) {
                     clientInfoAcked = true;
-                    GameDebug.Log("client acked client info yay");
+                    GameDebug.Log("client acked client info");
                 }
             }
         }
@@ -156,7 +164,10 @@ public class NetworkServer
         private bool clientInfoAcked;
     }
 
-    
+    public Dictionary<int, ServerConnection> GetConnections() {
+        return _serverConnections;
+    }
+
     private Dictionary<int, ServerConnection> _serverConnections = new Dictionary<int, ServerConnection>();
 }
 

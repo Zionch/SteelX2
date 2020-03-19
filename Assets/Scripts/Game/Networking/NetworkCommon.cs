@@ -30,6 +30,9 @@ public interface INetworkTransport
 
 public static class NetworkConfig
 {
+    [ConfigVar(Name = "net.printstats", DefaultValue = "0", Description = "Print stats to console every N frame")]
+    public static ConfigVar netPrintStats;
+
     public const string TestRoomName = "_test";
     public const int PhotonSendRate = 30;
     public const int PhotonSerializeRate = 30;
