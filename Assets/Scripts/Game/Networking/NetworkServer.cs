@@ -1,5 +1,4 @@
-﻿
-using Photon.Pun;
+﻿using Photon.Pun;
 using System.Collections.Generic;
 
 public class NetworkServer
@@ -10,6 +9,12 @@ public class NetworkServer
         Connecting,
         Connected,
     }
+
+    public class ServerPackageInfo : PackageInfo
+    {
+
+    }
+
     private ConnectionState _connectionState = ConnectionState.Disconnected;
 
     private INetworkTransport _transport;
@@ -47,16 +52,23 @@ public class NetworkServer
                 OnDisconnect(e.ConnectionId);
                 break;
                 case TransportEvent.Type.Data:
-                OnData(e.Data);
+                OnData(e.ConnectionId, e.Data);
                 break;
             }
         }
     }
 
     public void SendData() {
+        foreach(var connection in _serverConnections.Values) {
+            connection.SendPackage();
+        }
     }
 
-    public void OnData(byte[] data) {
+    public void OnData(int connectionId, byte[] data) {
+        if (!_serverConnections.ContainsKey(connectionId))
+            return;
+
+        _serverConnections[connectionId].ReadPackage(data);
     }
 
     public void OnConnect(int connectionId) {
@@ -66,10 +78,8 @@ public class NetworkServer
         }
         GameDebug.Log($"Player {connectionId} is connected");
 
-        _transport.SendData(connectionId, TransportEvent.Type.Connect, null);
-
         if(!_serverConnections.ContainsKey(connectionId))
-            _serverConnections.Add(connectionId, new ServerConnection(connectionId));
+            _serverConnections.Add(connectionId, new ServerConnection(connectionId, _transport));
     }
 
     public void OnDisconnect(int connectionId) {
@@ -90,15 +100,63 @@ public class NetworkServer
         Disconnect();
     }
 
-    private class ServerConnection
+    private class ServerConnection : NetworkConnection<ServerPackageInfo>
     {
-        public readonly int ConnectionId;
-
-        public ServerConnection(int connectionId) {
-            ConnectionId = connectionId;
+        public ServerConnection(int connectionId, INetworkTransport transport) : base(connectionId, transport) {
         }
+
+        public void ReadPackage(byte[] packageData) {
+            NetworkMessage content;
+
+            int headerSize;
+            var packageSequence = ProcessPackageHeader(packageData, out content, out headerSize);
+
+            var input = new BitInputStream(packageData);
+            input.SkipBytes(headerSize);
+
+            //if ((content & NetworkMessage.ClientConfig) != 0)
+            //    ReadClientConfig(ref input);
+        }
+
+        //public void ReadClientConfig(ref BitInputStream inpuf) {
+
+        //}
+
+        public void SendPackage() {
+            var rawOutputStream = new BitOutputStream(m_PackageBuffer);
+
+            ServerPackageInfo packageInfo;
+            BeginSendPackage(ref rawOutputStream, out packageInfo);
+
+            // The ifs below are in essence the 'connection handshake' logic.
+            if (!clientInfoAcked) {
+                // Keep sending client info until it is acked
+                WriteClientInfo(ref rawOutputStream);
+            }
+
+            CompleteSendPackage(packageInfo, ref rawOutputStream);
+        }
+
+        protected override void NotifyDelivered(int sequence, ServerPackageInfo info, bool madeIt) {
+            base.NotifyDelivered(sequence, info, madeIt);
+
+            if (madeIt) {
+                if ((info.Content & NetworkMessage.ClientInfo) != 0) {
+                    clientInfoAcked = true;
+                    GameDebug.Log("client acked client info yay");
+                }
+            }
+        }
+
+        public void WriteClientInfo(ref BitOutputStream output) {
+            AddMessageContentFlag(NetworkMessage.ClientInfo);
+            output.WriteBits((uint)ConnectionId, 8);
+        }
+
+        private bool clientInfoAcked;
     }
 
+    
     private Dictionary<int, ServerConnection> _serverConnections = new Dictionary<int, ServerConnection>();
 }
 

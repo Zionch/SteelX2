@@ -34,3 +34,18 @@ public static class NetworkConfig
     public const int PhotonSendRate = 30;
     public const int PhotonSerializeRate = 30;
 }
+
+public enum NetworkMessage
+{
+    // Shared messages
+    Events = 1 << 0,
+
+    // Server -> Client messages
+    ClientInfo = 1 << 1,
+    MapInfo = 1 << 2,
+    Snapshot = 1 << 3,
+
+    // Client -> Server messages
+    ClientConfig = 1 << 1,
+    Commands = 1 << 2,
+}

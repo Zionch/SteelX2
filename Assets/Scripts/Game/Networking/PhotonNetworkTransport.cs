@@ -19,6 +19,10 @@ public abstract class PhotonNetworkTransport : INetworkTransport, IConnectionCal
         if (!PhotonNetwork.IsConnected) {
             PhotonNetwork.ConnectUsingSettings();
         }
+
+        if(PhotonNetwork.IsConnectedAndReady && PhotonNetwork.InRoom) {
+            transportEvents.Enqueue(new TransportEvent(TransportEvent.Type.Connect, PhotonNetwork.LocalPlayer.ActorNumber, null));
+        }
     }
 
     public void Disconnect() {
@@ -153,6 +157,11 @@ public class ClientPhotonNetworkTransport : PhotonNetworkTransport
             Receivers = ReceiverGroup.MasterClient
         };
         PhotonNetwork.RaiseEvent((byte)type, data, options, SendOptions.SendUnreliable);
+    }
+
+    public override void OnJoinedRoom() {
+        base.OnJoinedRoom();
+        transportEvents.Enqueue(new TransportEvent(TransportEvent.Type.Connect, PhotonNetwork.LocalPlayer.ActorNumber, null));
     }
 }
 

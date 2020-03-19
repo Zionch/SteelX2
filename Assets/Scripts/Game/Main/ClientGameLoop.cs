@@ -1,5 +1,4 @@
-﻿
-public class ClientGameLoop : Game.IGameLoop
+﻿public class ClientGameLoop : Game.IGameLoop
 {
     private enum ClientState
     {

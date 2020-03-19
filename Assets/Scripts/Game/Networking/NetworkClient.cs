@@ -1,13 +1,13 @@
 ﻿
 public class NetworkClient
 {
-    private enum ConnectionState
+    protected enum ConnectionState
     {
         Disconnected,
         Connecting,
         Connected,
     }
-    private ConnectionState _connectionState = ConnectionState.Disconnected;
+    protected ConnectionState _connectionState = ConnectionState.Disconnected;
 
     // Sent from client to server when changed
     public class ClientConfig
@@ -60,16 +60,23 @@ public class NetworkClient
     }
 
     public void SendData() {
+        if (_clientConnection == null)
+            return;
+
+        _clientConnection.SendPackage();
     }
 
     public void OnData(byte[] data) {
+        if (_clientConnection == null)
+            return;
+
+        _clientConnection.ReadPackage(data);
     }
 
-    public void OnConnect(int connectionId) {
+    public void OnConnect(int connectionId) {//connect to photon
         GameDebug.Assert(_connectionState == ConnectionState.Connecting);
-        Console.Write("Connected");
-        _connectionState = ConnectionState.Connected;
-        _clientConnection = new ClientConnection(connectionId, _clientConfig);
+
+        _clientConnection = new ClientConnection(connectionId, _transport, _clientConfig);
     }
 
     public void OnDisconnect(int connectionId) {
@@ -85,13 +92,56 @@ public class NetworkClient
         _clientConnection = null;
     }
 
-    private class ClientConnection
+    private class ClientConnection : NetworkConnection<PackageInfo>
     {
         private ClientConfig _clientConfig;
-        public readonly int ConnectionId;
 
-        public ClientConnection(int connectionId, ClientConfig clientConfig) {
-            ConnectionId = connectionId;
+        public ClientConnection(int connectionId, INetworkTransport transport, ClientConfig clientConfig) :  base(connectionId, transport){
         }
+
+        public void ReadPackage(byte[] packageData) {
+            GameDebug.Log("read package");
+            NetworkMessage content;
+
+            int headerSize;
+            var packageSequence = ProcessPackageHeader(packageData, out content, out headerSize);
+
+            // The package was dropped (duplicate or too old) or if it was a fragment not yet assembled, bail out here
+            if (packageSequence == 0) {
+                return;
+            }
+
+            var input = new BitInputStream(packageData);
+            input.SkipBytes(headerSize);
+
+            if ((content & NetworkMessage.ClientInfo) != 0)
+                ReadClientInfo(ref input);
+        }
+
+        public void ReadClientInfo(ref BitInputStream input) {
+            var newClientId = (int)input.ReadBits(8);
+
+            if (receiveClientInfo) return;
+
+            GameDebug.Log("Client received client info");
+
+            receiveClientInfo = true;
+        }
+
+        public void SendPackage() {
+            if (!receiveClientInfo)//do not send anything until we receive client info
+                return;
+
+            var rawOutputStream = new BitOutputStream(m_PackageBuffer);
+
+            // todo : only if there is anything to send
+
+            PackageInfo info;
+            BeginSendPackage(ref rawOutputStream, out info);
+
+            CompleteSendPackage(info, ref rawOutputStream);
+        }
+
+        private bool receiveClientInfo;
     }
 }
