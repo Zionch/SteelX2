@@ -134,6 +134,15 @@ public class NetworkConnection<TPackageInfo, TCounters> where TPackageInfo : Pac
             return 0;
         }
 
+        if (inSequenceNew % 3 == 0) {
+            var timeOnServer = (ushort)input.ReadBits(8);
+            TPackageInfo info;
+            if (outstandingPackages.TryGetValue(outSequenceAckNew, out info)) {
+                var now = NetworkUtils.stopwatch.ElapsedMilliseconds;
+                rtt = (int)(now - info.SentTime - timeOnServer);
+            }
+        }
+
         // If the ack sequence is not higher we have nothing new to do
         if (outSequenceAckNew <= outSequenceAck) {
             headerSize = input.Align();
@@ -189,6 +198,14 @@ public class NetworkConnection<TPackageInfo, TCounters> where TPackageInfo : Pac
         output.WriteBits(Sequence.ToUInt16(outSequence), 16);
         output.WriteBits(Sequence.ToUInt16(inSequence), 16);
         output.WriteBits(inSequenceAckMask, 16);
+
+        // Send rtt info every 3th package. We calculate the RTT as the time from sending the package
+        // and receiving the ack for the package minus the time the package spent on the server
+        if (outSequence % 3 == 0) {
+            var now = NetworkUtils.stopwatch.ElapsedMilliseconds;
+            var timeOnServer = (byte)Math.Min(now - inSequenceTime, 255);
+            output.WriteBits(timeOnServer, 8);
+        }
 
         info = outstandingPackages.Acquire(outSequence);
     }
