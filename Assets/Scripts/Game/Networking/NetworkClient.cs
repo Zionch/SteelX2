@@ -25,7 +25,7 @@ public class NetworkClient
 
     private INetworkTransport _transport;
     private ClientConfig _clientConfig;
-    private ClientConnection _clientConnection;
+    public ClientConnection _clientConnection { get; private set; }
 
     public bool IsConnected { get { return _connectionState == ConnectionState.Connected; } }
 
@@ -99,7 +99,7 @@ public class NetworkClient
         _clientConnection = null;
     }
 
-    private class ClientConnection : NetworkConnection<PackageInfo, NetworkClient.Counters>
+    public class ClientConnection : NetworkConnection<PackageInfo, NetworkClient.Counters>
     {
         private ClientConfig _clientConfig;
 

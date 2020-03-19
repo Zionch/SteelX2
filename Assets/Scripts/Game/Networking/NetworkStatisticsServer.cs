@@ -71,9 +71,6 @@ internal class NetworkStatisticsServer
     }
 
     const int k_WindowSize = 120;
-
-    FloatRollingAverage m_StatsDeltaTime = new FloatRollingAverage(k_WindowSize);
-    FloatRollingAverage m_ServerSimTime = new FloatRollingAverage(k_WindowSize);
 }
 
 

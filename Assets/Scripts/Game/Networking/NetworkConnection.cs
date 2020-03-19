@@ -70,6 +70,8 @@ public class NetworkConnection<TPackageInfo, TCounters> where TPackageInfo : Pac
 
     public int ProcessPackageHeader(byte[] packageData, out NetworkMessage content, out int headerSize) {
         counters.packagesIn++;
+        counters.bytesIn += packageData.Length;
+
         var input = new BitInputStream(packageData);
         
         headerSize = 0;
@@ -203,6 +205,7 @@ public class NetworkConnection<TPackageInfo, TCounters> where TPackageInfo : Pac
         byte[] data = new byte[packageSize];
         NetworkUtils.MemCopy(m_PackageBuffer, 0, data, 0, packageSize);
 
+        counters.bytesOut += data.Length;
         Transport.SendData(ConnectionId, TransportEvent.Type.Data, data);
 
         counters.packagesOut++;

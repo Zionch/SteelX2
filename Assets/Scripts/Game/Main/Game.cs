@@ -38,7 +38,7 @@ public class Game : MonoBehaviour
         InitConsole(IsHeadless, commandLineArgs);
         Application.targetFrameRate = 30;
 
-        RegisterCommands();
+        RegisterConsoleCommands();
 
         Console.SetOpen(true);
     }
@@ -161,7 +161,7 @@ public class Game : MonoBehaviour
 
     //Commands
     //=======================================================
-    private void RegisterCommands() {
+    private void RegisterConsoleCommands() {
         Console.AddCommand("serve", CmdServe, "Start server listening", this.GetHashCode());
         Console.AddCommand("client", CmdClient, "client: Enter client mode.", this.GetHashCode());
         Console.AddCommand("boot", CmdBoot, "Go back to boot loop", this.GetHashCode());

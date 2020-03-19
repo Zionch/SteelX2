@@ -9,10 +9,11 @@
     }
 
     private NetworkClient _networkClient;
+    private NetworkStatisticsClient _networkStatisticsClient;
 
     public bool Init(string[] args) {
         _networkClient = new NetworkClient(new ClientPhotonNetworkTransport());
-
+        _networkStatisticsClient = new NetworkStatisticsClient(_networkClient);
         _networkClient.Connect();
 
         return true;
@@ -22,6 +23,7 @@
         _networkClient.Update();
 
         _networkClient.SendData();
+        _networkStatisticsClient.Update();
     }
 
     public void FixedUpdate() {
