@@ -147,6 +147,7 @@ public class Game : MonoBehaviour
         foreach (var gameLoop in _gameLoops) {
             gameLoop.Shutdown();
         }
+        _gameLoops.Clear();
     }
 
     private void OnDestroy() {
