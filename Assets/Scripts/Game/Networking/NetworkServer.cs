@@ -45,20 +45,20 @@ public class NetworkServer
         _connectionState = ConnectionState.Connecting;
     }
 
-    public void Update() {
+    public void Update(INetworkCallbacks loop) {
         _transport.Update();
 
         TransportEvent e = new TransportEvent();
         while (_transport.NextEvent(ref e)) {
             switch (e.type) {
                 case TransportEvent.Type.Connect:
-                OnConnect(e.ConnectionId);
+                OnConnect(e.ConnectionId, loop);
                 break;
                 case TransportEvent.Type.Disconnect:
-                OnDisconnect(e.ConnectionId);
+                OnDisconnect(e.ConnectionId, loop);
                 break;
                 case TransportEvent.Type.Data:
-                OnData(e.ConnectionId, e.Data);
+                OnData(e.ConnectionId, e.Data, loop);
                 break;
             }
         }
@@ -70,25 +70,27 @@ public class NetworkServer
         }
     }
 
-    public void OnData(int connectionId, byte[] data) {
+    public void OnData(int connectionId, byte[] data, INetworkCallbacks loop) {
         if (!_serverConnections.ContainsKey(connectionId))
             return;
 
         _serverConnections[connectionId].ReadPackage(data);
     }
 
-    public void OnConnect(int connectionId) {
+    public void OnConnect(int connectionId, INetworkCallbacks loop) {
         if(connectionId == PhotonNetwork.LocalPlayer.ActorNumber) {
             _connectionState = ConnectionState.Connected;
             return;
         }
         GameDebug.Log($"Player {connectionId} is connected");
 
-        if(!_serverConnections.ContainsKey(connectionId))
+        if (!_serverConnections.ContainsKey(connectionId)) {
             _serverConnections.Add(connectionId, new ServerConnection(connectionId, _transport));
+
+        }
     }
 
-    public void OnDisconnect(int connectionId) {
+    public void OnDisconnect(int connectionId, INetworkCallbacks loop) {
         if (connectionId == PhotonNetwork.LocalPlayer.ActorNumber) {
             _connectionState = ConnectionState.Disconnected;
             return;

@@ -28,6 +28,13 @@ public interface INetworkTransport
     void Update();
 }
 
+public interface INetworkCallbacks
+{
+    void OnConnect(int clientId);
+    void OnDisconnect(int clientId);
+    //void OnEvent(int clientId, NetworkEvent info);
+}
+
 public static class NetworkConfig
 {
     [ConfigVar(Name = "net.printstats", DefaultValue = "0", Description = "Print stats to console every N frame")]
