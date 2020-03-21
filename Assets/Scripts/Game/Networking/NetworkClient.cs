@@ -7,13 +7,15 @@ public interface INetworkClientCallbacks : INetworkCallbacks
 
 public class NetworkClient
 {
-    protected enum ConnectionState
+    public enum ConnectionState
     {
         Disconnected,
         Connecting,
-        Connected,
+        Connected,//client is connected if received client info
     }
-    protected ConnectionState _connectionState = ConnectionState.Disconnected;
+    protected ConnectionState connectionState { get {
+        return _clientConnection == null ? ConnectionState.Disconnected : _clientConnection.connectionState;
+    }}
 
     // Sent from client to server when changed
     public class ClientConfig
@@ -33,7 +35,7 @@ public class NetworkClient
     private ClientConfig _clientConfig;
     public ClientConnection _clientConnection { get; private set; }
 
-    public bool IsConnected { get { return _connectionState == ConnectionState.Connected; } }
+    public bool IsConnected { get { return connectionState == ConnectionState.Connected; } }
 
     public NetworkClient(INetworkTransport transport) {
         _transport = transport;
@@ -45,12 +47,12 @@ public class NetworkClient
     }
 
     public void Connect() {
-        GameDebug.Assert(_connectionState == ConnectionState.Disconnected);
+        GameDebug.Assert(connectionState == ConnectionState.Disconnected);
         GameDebug.Assert(_clientConnection == null);
 
         _transport.Connect();
 
-        _connectionState = ConnectionState.Connecting;
+        _clientConnection = new ClientConnection(0, _transport, _clientConfig);//0 is temp. , wait server send our id
     }
 
     public void Update(INetworkClientCallbacks clientNetworkConsumer) {
@@ -90,26 +92,19 @@ public class NetworkClient
     }
 
     public void OnConnect(int connectionId) {//connect to photon
-        GameDebug.Assert(_connectionState == ConnectionState.Connecting);
-
-        _clientConnection = new ClientConnection(connectionId, _transport, _clientConfig);
+        GameDebug.Assert(connectionState == ConnectionState.Connecting);
     }
 
     public void OnDisconnect(int connectionId) {
         if (_clientConnection == null) return;
-
-        if(_clientConnection.ConnectionId != connectionId) {
-            GameDebug.LogWarning("Receive disconnect event but not towards this player");
-            return;
-        }
         
         GameDebug.Log("Disconnected");
-        _connectionState = ConnectionState.Disconnected;
         _clientConnection = null;
     }
 
     public class ClientConnection : NetworkConnection<PackageInfo, NetworkClient.Counters>
     {
+        public ConnectionState connectionState = ConnectionState.Connecting;
         private ClientConfig _clientConfig;
 
         public ClientConnection(int connectionId, INetworkTransport transport, ClientConfig clientConfig) :  base(connectionId, transport){
@@ -149,11 +144,12 @@ public class NetworkClient
         public void ReadClientInfo(ref RawInputStream input) {
             var newClientId = (int)input.ReadRawBits(8);
 
-            if (receiveClientInfo) return;
+            if (connectionState == ConnectionState.Connected) return;
 
+            ConnectionId = newClientId;
             GameDebug.Log("Client received client info");
 
-            receiveClientInfo = true;
+            connectionState = ConnectionState.Connected;
         }
 
         void ReadMapInfo(ref RawInputStream input){
@@ -174,7 +170,7 @@ public class NetworkClient
         }
 
         public void SendPackage() {
-            if (!receiveClientInfo)//do not send anything until we receive client info
+            if (connectionState != ConnectionState.Connected)//do not send anything until we receive client info
                 return;
 
             var rawOutputStream = new BitOutputStream(m_PackageBuffer);
@@ -197,7 +193,5 @@ public class NetworkClient
         }
 
         MapInfo mapInfo = new MapInfo();
-
-        private bool receiveClientInfo;
     }
 }

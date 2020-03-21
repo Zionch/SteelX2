@@ -13,6 +13,9 @@ public class Game : MonoBehaviour
     [ConfigVar(Name = "server.tickrate", DefaultValue = "60", Description = "Tickrate for server", Flags = ConfigVar.Flags.ServerInfo)]
     public static ConfigVar serverTickRate;
 
+    private System.Diagnostics.Stopwatch m_Clock;
+    private long m_StopwatchFrequency;
+
     public static double frameTime;
     public interface IGameLoop
     {
@@ -39,6 +42,10 @@ public class Game : MonoBehaviour
         Application.targetFrameRate = 30;
 
         RegisterConsoleCommands();
+
+        m_StopwatchFrequency = System.Diagnostics.Stopwatch.Frequency;
+        m_Clock = new System.Diagnostics.Stopwatch();
+        m_Clock.Start();
 
         Console.SetOpen(true);
     }
@@ -74,6 +81,8 @@ public class Game : MonoBehaviour
             _requestedGameLoopTypes.Clear();
         }
 
+        frameTime = (double)m_Clock.ElapsedTicks / m_StopwatchFrequency;
+        
         try {
             if (!_errorState) {
                 foreach (var gameLoop in _gameLoops) {
