@@ -16,7 +16,6 @@ namespace NetworkCompression
 
         public uint ReadRawBits(int numbits) {
             uint value = 0;
-            GameDebug.Log("read raw bits : " + numbits + " len : " + m_Buffer.Length);
             for (int i = 0; i < numbits; i += 8)
                 value |= (uint)m_Buffer[m_CurrentByteIndex++] << i;
             return value;

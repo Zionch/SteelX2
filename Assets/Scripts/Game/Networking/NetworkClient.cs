@@ -70,6 +70,9 @@ public class NetworkClient
                 break;
             }
         }
+
+        if (_clientConnection != null)
+            _clientConnection.ProcessMapUpdate(clientNetworkConsumer);
     }
 
     public void SendData() {
