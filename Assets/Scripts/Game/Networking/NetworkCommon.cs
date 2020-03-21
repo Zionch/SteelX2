@@ -43,6 +43,26 @@ public static class NetworkConfig
     public const string TestRoomName = "_test";
     public const int PhotonSendRate = 30;
     public const int PhotonSerializeRate = 30;
+
+    public const int maxFixedSchemaIds = 2;
+    public const int maxEventTypeSchemaIds = 8;
+    public const int maxEntityTypeSchemaIds = 40;
+
+    public const int maxSchemaIds = maxFixedSchemaIds + maxEventTypeSchemaIds + maxEntityTypeSchemaIds;
+
+    public const int maxFieldsPerSchema = 128;
+    public const int maxContextsPerField = 4;
+    public const int maxSkipContextsPerSchema = maxFieldsPerSchema / 4;
+    public const int maxContextsPerSchema = maxSkipContextsPerSchema + maxFieldsPerSchema * maxContextsPerField;
+
+    public const int firstSchemaContext = 16;
+    public const int mapSchemaId = 1;
+
+    public const int miscContext = 0;
+
+    public readonly static System.Text.UTF8Encoding encoding = new System.Text.UTF8Encoding();
+    public readonly static float[] encoderPrecisionScales = new float[] { 1.0f, 10.0f, 100.0f, 1000.0f };
+    public readonly static float[] decoderPrecisionScales = new float[] { 1.0f, 0.1f, 0.01f, 0.001f };
 }
 
 public enum NetworkMessage

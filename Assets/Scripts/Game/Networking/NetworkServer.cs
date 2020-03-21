@@ -1,8 +1,12 @@
-﻿using Photon.Pun;
+﻿using NetworkCompression;
+using Photon.Pun;
 using System.Collections.Generic;
+using Unity.Collections.LowLevel.Unsafe;
 
 public class NetworkServer
 {
+    public delegate void DataGenerator(ref NetworkWriter writer);
+
     private enum ConnectionState
     {
         Disconnected,
@@ -12,13 +16,21 @@ public class NetworkServer
 
     public class ServerPackageInfo : PackageInfo
     {
-
+        public int serverSequence;
     }
 
     public class Counters : NetworkConnectionCounters
     {
         public int snapshotsOut;
         public int commandsIn;
+    }
+
+    private unsafe class MapInfo
+    {
+        public int serverInitSequence;                  // The server frame the map was initialized
+        public ushort mapId;                            // Unique sequence number for the map (to deal with redudant mapinfo messages)
+        public NetworkSchema schema;                    // Schema for the map info
+        public uint* data = (uint*)UnsafeUtility.Malloc(1024, UnsafeUtility.AlignOf<uint>(), Unity.Collections.Allocator.Persistent);            // Game specific payload
     }
 
     private ConnectionState _connectionState = ConnectionState.Disconnected;
@@ -43,6 +55,30 @@ public class NetworkServer
         _transport.Connect();
 
         _connectionState = ConnectionState.Connecting;
+    }
+
+    unsafe public void InitializeMap(DataGenerator generator) {
+        // Generate schema the first time we set map info
+        bool generateSchema = false;
+        if (m_MapInfo.schema == null) {
+            m_MapInfo.schema = new NetworkSchema(NetworkConfig.mapSchemaId);
+            generateSchema = true;
+        }
+
+        // Update map info
+        var writer = new NetworkWriter(m_MapInfo.data, 1024, m_MapInfo.schema, generateSchema);
+        generator(ref writer);
+        writer.Flush();
+
+        m_MapInfo.serverInitSequence = m_ServerSequence;
+        ++m_MapInfo.mapId;
+
+        // Reset map and connection state
+        //serverTime = 0;
+        //m_Entities.Clear();
+        //m_FreeEntities.Clear();
+        foreach (var pair in _serverConnections)
+            pair.Value.Reset();
     }
 
     public void Update(INetworkCallbacks loop) {
@@ -85,8 +121,7 @@ public class NetworkServer
         GameDebug.Log($"Player {connectionId} is connected");
 
         if (!_serverConnections.ContainsKey(connectionId)) {
-            _serverConnections.Add(connectionId, new ServerConnection(connectionId, _transport));
-
+            _serverConnections.Add(connectionId, new ServerConnection(this, connectionId, _transport));
         }
     }
 
@@ -110,7 +145,8 @@ public class NetworkServer
 
     public class ServerConnection : NetworkConnection<ServerPackageInfo, NetworkServer.Counters>
     {
-        public ServerConnection(int connectionId, INetworkTransport transport) : base(connectionId, transport) {
+        public ServerConnection(NetworkServer server, int connectionId, INetworkTransport transport) : base(connectionId, transport) {
+            _server = server;
         }
 
         public void ReadPackage(byte[] packageData) {
@@ -121,8 +157,7 @@ public class NetworkServer
             int headerSize;
             var packageSequence = ProcessPackageHeader(packageData, out content, out headerSize);
 
-            var input = new BitInputStream(packageData);
-            input.SkipBytes(headerSize);
+            var input = new RawInputStream(packageData, headerSize);
 
             //if ((content & NetworkMessage.ClientConfig) != 0)
             //    ReadClientConfig(ref input);
@@ -138,13 +173,46 @@ public class NetworkServer
             ServerPackageInfo packageInfo;
             BeginSendPackage(ref rawOutputStream, out packageInfo);
 
+            int endOfHeaderPos = rawOutputStream.Align();
+            var output = new RawOutputStream();// new TOutputStream();  Due to bug new generates garbage here
+            output.Initialize(m_PackageBuffer, endOfHeaderPos);
+
+            packageInfo.serverSequence = _server.m_ServerSequence;
+
             // The ifs below are in essence the 'connection handshake' logic.
             if (!clientInfoAcked) {
                 // Keep sending client info until it is acked
-                WriteClientInfo(ref rawOutputStream);
+                WriteClientInfo(ref output);
+            }else if (!mapAcked) {
+                if (_server.m_MapInfo.serverInitSequence > 0) {
+                    // Keep sending map info until it is acked
+                    WriteMapInfo(ref output);
+                }
             }
 
+            int compressedSize = output.Flush();
+            rawOutputStream.SkipBytes(compressedSize);
+
             CompleteSendPackage(packageInfo, ref rawOutputStream);
+        }
+
+        public void WriteClientInfo(ref RawOutputStream output) {
+            AddMessageContentFlag(NetworkMessage.ClientInfo);
+            output.WriteRawBits((uint)ConnectionId, 8);
+        }
+
+        unsafe private void WriteMapInfo(ref RawOutputStream output){
+            AddMessageContentFlag(NetworkMessage.MapInfo);
+
+            output.WriteRawBits(_server.m_MapInfo.mapId, 16);
+
+            // Write schema if client haven't acked it
+            output.WriteRawBits(mapSchemaAcked ? 0 : 1U, 1);
+            if (!mapSchemaAcked)
+                NetworkSchema.WriteSchema(_server.m_MapInfo.schema, ref output);
+
+            // Write map data
+            NetworkSchema.CopyFieldsFromBuffer(_server.m_MapInfo.schema, _server.m_MapInfo.data, ref output);
         }
 
         protected override void NotifyDelivered(int sequence, ServerPackageInfo info, bool madeIt) {
@@ -155,21 +223,31 @@ public class NetworkServer
                     clientInfoAcked = true;
                     GameDebug.Log("client acked client info");
                 }
+
+                // Check if the client received the map info
+                if ((info.Content & NetworkMessage.MapInfo) != 0 && info.serverSequence >= _server.m_MapInfo.serverInitSequence) {
+                    GameDebug.Log("client acked map info");
+                    mapAcked = true;
+                    mapSchemaAcked = true;
+                }
             }
         }
 
-        public void WriteClientInfo(ref BitOutputStream output) {
-            AddMessageContentFlag(NetworkMessage.ClientInfo);
-            output.WriteBits((uint)ConnectionId, 8);
+        public void Reset() {
+            mapAcked = false;
         }
 
+        private bool mapAcked, mapSchemaAcked;
         private bool clientInfoAcked;
+        NetworkServer _server;
     }
 
     public Dictionary<int, ServerConnection> GetConnections() {
         return _serverConnections;
     }
 
+    int m_ServerSequence = 1;
+    MapInfo m_MapInfo = new MapInfo();
     private Dictionary<int, ServerConnection> _serverConnections = new Dictionary<int, ServerConnection>();
 }
 

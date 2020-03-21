@@ -1,4 +1,4 @@
-﻿public class ClientGameLoop : Game.IGameLoop
+﻿public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
 {
     private enum ClientState
     {
@@ -20,7 +20,7 @@
     }
 
     public void Update() {
-        _networkClient.Update();
+        _networkClient.Update(this);
 
         _networkClient.SendData();
         _networkStatisticsClient.Update();
@@ -35,5 +35,16 @@
     public void Shutdown() {
         _networkClient.Disconnect();
     }
+
+    public void OnMapUpdate(ref NetworkReader reader) {
+        GameDebug.Log("map : " + reader.ReadString());
+        //m_LevelName = data.ReadString();
+        //if (m_StateMachine.CurrentState() != ClientState.Loading)
+        //    m_StateMachine.SwitchTo(ClientState.Loading);
+    }
+
+    public void OnConnect(int clientId) {}
+
+    public void OnDisconnect(int clientId) {}
 }
 

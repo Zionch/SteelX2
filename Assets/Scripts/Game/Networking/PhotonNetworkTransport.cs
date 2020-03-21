@@ -15,12 +15,11 @@ public abstract class PhotonNetworkTransport : INetworkTransport, IConnectionCal
 
     //client wait server to send a connect event to him, so client won't send anything if server isn't joined
     public void Connect() {
-        //this is for starting game directly , not through lobby->room
-        if (!PhotonNetwork.IsConnected) {
+        if (!PhotonNetwork.IsConnected) {//this is for starting game directly , not through lobby->room
             PhotonNetwork.ConnectUsingSettings();
-        }
-
-        if(PhotonNetwork.IsConnectedAndReady && PhotonNetwork.InRoom) {
+        }else if (!PhotonNetwork.InRoom) {
+            OnConnectedToMaster();
+        }else {
             transportEvents.Enqueue(new TransportEvent(TransportEvent.Type.Connect, PhotonNetwork.LocalPlayer.ActorNumber, null));
         }
     }
@@ -192,7 +191,7 @@ public class ServerPhotonNetworkTransport : PhotonNetworkTransport, IMatchmaking
         }
 
         //trigger connect event foreach player
-        foreach(var player in PhotonNetwork.PlayerListOthers) {
+        foreach(var player in PhotonNetwork.PlayerList) {
             transportEvents.Enqueue(new TransportEvent(TransportEvent.Type.Connect, player.ActorNumber, null));
         }
     }

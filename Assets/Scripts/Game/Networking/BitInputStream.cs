@@ -62,10 +62,6 @@ public struct BitInputStream
         m_CurrentByteIdx += count;
     }
 
-    public void SkipBytes(int bytes) {
-        m_CurrentByteIdx += bytes;
-    }
-
     public int Align() {
         var remainder = m_CurrentBitIdx % 8;
         if (remainder > 0) {

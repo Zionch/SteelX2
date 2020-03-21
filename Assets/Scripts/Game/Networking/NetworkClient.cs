@@ -1,4 +1,10 @@
-﻿
+﻿using NetworkCompression;
+
+public interface INetworkClientCallbacks : INetworkCallbacks
+{
+    void OnMapUpdate(ref NetworkReader reader);
+}
+
 public class NetworkClient
 {
     protected enum ConnectionState
@@ -47,7 +53,7 @@ public class NetworkClient
         _connectionState = ConnectionState.Connecting;
     }
 
-    public void Update() {
+    public void Update(INetworkClientCallbacks clientNetworkConsumer) {
         _transport.Update();
 
         TransportEvent e = new TransportEvent();
@@ -60,7 +66,7 @@ public class NetworkClient
                 OnDisconnect(e.ConnectionId);
                 break;
                 case TransportEvent.Type.Data:
-                OnData(e.Data);
+                OnData(e.Data, clientNetworkConsumer);
                 break;
             }
         }
@@ -73,7 +79,7 @@ public class NetworkClient
         _clientConnection.SendPackage();
     }
 
-    public void OnData(byte[] data) {
+    public void OnData(byte[] data, INetworkClientCallbacks clientNetworkConsumer) {
         if (_clientConnection == null)
             return;
 
@@ -106,33 +112,62 @@ public class NetworkClient
         public ClientConnection(int connectionId, INetworkTransport transport, ClientConfig clientConfig) :  base(connectionId, transport){
         }
 
+        unsafe public void ProcessMapUpdate(INetworkClientCallbacks loop) {
+            if (mapInfo.mapSequence > 0 && !mapInfo.processed) {
+                fixed (uint* data = mapInfo.data) {
+                    var reader = new NetworkReader(data, mapInfo.schema);
+                    loop.OnMapUpdate(ref reader);
+                    mapInfo.processed = true;
+                }
+            }
+        }
+
         public void ReadPackage(byte[] packageData) {
             counters.bytesIn += packageData.Length;
 
             NetworkMessage content;
             int headerSize;
             var packageSequence = ProcessPackageHeader(packageData, out content, out headerSize);
-
             // The package was dropped (duplicate or too old) or if it was a fragment not yet assembled, bail out here
             if (packageSequence == 0) {
                 return;
             }
 
-            var input = new BitInputStream(packageData);
-            input.SkipBytes(headerSize);
+            var input = new RawInputStream();
+            input.Initialize(packageData, headerSize);
 
             if ((content & NetworkMessage.ClientInfo) != 0)
                 ReadClientInfo(ref input);
+
+            if ((content & NetworkMessage.MapInfo) != 0)
+                ReadMapInfo(ref input);
         }
 
-        public void ReadClientInfo(ref BitInputStream input) {
-            var newClientId = (int)input.ReadBits(8);
+        public void ReadClientInfo(ref RawInputStream input) {
+            var newClientId = (int)input.ReadRawBits(8);
 
             if (receiveClientInfo) return;
 
             GameDebug.Log("Client received client info");
 
             receiveClientInfo = true;
+        }
+
+        void ReadMapInfo(ref RawInputStream input){
+            //input.SetStatsType(NetworkCompressionReader.Type.MapInfo);
+            var mapSequence = (ushort)input.ReadRawBits(16);
+            var schemaIncluded = input.ReadRawBits(1) != 0;
+            if (schemaIncluded) {
+                mapInfo.schema = NetworkSchema.ReadSchema(ref input);   // might override previous definition
+            }
+
+            if (mapSequence > mapInfo.mapSequence) {
+                mapInfo.mapSequence = mapSequence;
+                mapInfo.ackSequence = inSequence;
+                mapInfo.processed = false;
+                NetworkSchema.CopyFieldsToBuffer(mapInfo.schema, ref input, mapInfo.data);
+            } else
+                NetworkSchema.SkipFields(mapInfo.schema, ref input);
         }
 
         public void SendPackage() {
@@ -148,6 +183,17 @@ public class NetworkClient
 
             CompleteSendPackage(info, ref rawOutputStream);
         }
+
+        class MapInfo
+        {
+            public bool processed;                  // Map reset was processed by game
+            public ushort mapSequence;              // map identifier to discard duplicate messages
+            public int ackSequence;                 // package sequence the map was acked in (discard packages before this)
+            public NetworkSchema schema;            // Schema for the map info
+            public uint[] data = new uint[256];     // Game specific map info payload
+        }
+
+        MapInfo mapInfo = new MapInfo();
 
         private bool receiveClientInfo;
     }

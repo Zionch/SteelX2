@@ -8,6 +8,9 @@ using UnityEngine;
 
 public static class NetworkUtils
 {
+    public static uint FloatToUInt32(float value) { return new UIntFloat() { floatValue = value }.intValue; }
+    public static float UInt32ToFloat(uint value) { return new UIntFloat() { intValue = value }.floatValue; }
+
     static NetworkUtils() {
         stopwatch.Start();
     }
@@ -36,6 +39,15 @@ public static class NetworkUtils
         }
 
         return 0;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    struct UIntFloat
+    {
+        [FieldOffset(0)]
+        public float floatValue;
+        [FieldOffset(0)]
+        public uint intValue;
     }
 }
 
