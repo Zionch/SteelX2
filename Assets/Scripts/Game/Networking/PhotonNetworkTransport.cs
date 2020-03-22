@@ -155,6 +155,7 @@ public class ClientPhotonNetworkTransport : PhotonNetworkTransport
         RaiseEventOptions options = new RaiseEventOptions() {
             Receivers = ReceiverGroup.MasterClient
         };
+
         PhotonNetwork.RaiseEvent((byte)type, data, options, SendOptions.SendUnreliable);
     }
 
@@ -217,6 +218,7 @@ public class ServerPhotonNetworkTransport : PhotonNetworkTransport, IMatchmaking
         RaiseEventOptions options = new RaiseEventOptions() {
             TargetActors = new int[] { connectionId }
         };
+
         PhotonNetwork.RaiseEvent((byte)type, data, options, SendOptions.SendUnreliable);
     }
 }

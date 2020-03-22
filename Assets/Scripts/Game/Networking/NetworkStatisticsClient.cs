@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class NetworkStatisticsClient
 {
+    public FloatRollingAverage rtt { get { return m_RTT; } }
+
     private NetworkClient m_NetworkClient;
 
     public NetworkStatisticsClient(NetworkClient networkClient) {
@@ -10,6 +12,8 @@ public class NetworkStatisticsClient
     }
 
     public void Update() {
+        m_RTT.Update(m_NetworkClient.rtt);
+
         if (NetworkConfig.netPrintStats.IntValue > 0) {
             if (Time.frameCount % NetworkConfig.netPrintStats.IntValue == 0) {
                 PrintStats();
@@ -32,5 +36,9 @@ public class NetworkStatisticsClient
                 client.counters.packagesStaleIn
                 ));
     }
+
+    const int k_WindowSize = 120;
+
+    FloatRollingAverage m_RTT = new FloatRollingAverage(k_WindowSize);
 }
 

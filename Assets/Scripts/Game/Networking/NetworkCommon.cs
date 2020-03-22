@@ -55,11 +55,27 @@ public static class NetworkConfig
     public const int maxSkipContextsPerSchema = maxFieldsPerSchema / 4;
     public const int maxContextsPerSchema = maxSkipContextsPerSchema + maxFieldsPerSchema * maxContextsPerField;
 
+    // Number of serialized snapshots kept on server. Each server tick generate a snapshot. 
+    public const int snapshotDeltaCacheSize = 128;  // Number of snapshots to cache for deltas
+
+    // Size of client ack buffers. These buffers are used to keep track of ack'ed baselines
+    // from clients. Theoretically the 'right' size is snapshotDeltaCacheSize / (server.tickrate / client.updaterate)
+    // e.g. 128 / (60 / 20) = 128 / 3, but since client.updaterate <= server.tickrate we use
+    public const int clientAckCacheSize = snapshotDeltaCacheSize;
+
     public const int firstSchemaContext = 16;
     public const int mapSchemaId = 1;
 
     public const int miscContext = 0;
+    public const int baseSequenceContext = 1;
+    public const int baseSequence1Context = 2;
+    public const int baseSequence2Context = 3;
+    public const int serverTimeContext = 4;
 
+    public const int maxEventDataSize = 512;
+    public const int maxCommandDataSize = 128;
+    public const int maxEntitySnapshotDataSize = 512;
+    public const int maxWorldSnapshotDataSize = 64 * 1024; // The entire world snapshot has to fit in this number of bytes
     public readonly static System.Text.UTF8Encoding encoding = new System.Text.UTF8Encoding();
     public readonly static float[] encoderPrecisionScales = new float[] { 1.0f, 10.0f, 100.0f, 1000.0f };
     public readonly static float[] decoderPrecisionScales = new float[] { 1.0f, 0.1f, 0.01f, 0.001f };
