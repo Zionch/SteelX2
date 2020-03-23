@@ -45,6 +45,13 @@ public class ServerGameWorld : ISnapshotGenerator
 
     }
 
+    public void GenerateEntitySnapshot(int entityId, ref NetworkWriter writer) {
+    }
+
+    public string GenerateEntityName(int entityId) {
+        return " ";
+    }
+
     private GameWorld _gameWorld;
     private NetworkServer _networkServer;
 }

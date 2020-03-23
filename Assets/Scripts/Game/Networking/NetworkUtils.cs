@@ -41,6 +41,10 @@ public static class NetworkUtils
         return 0;
     }
 
+    public static uint SimpleHashStreaming(uint old_hash, uint value) {
+        return old_hash * 179 + value + 1;
+    }
+
     [StructLayout(LayoutKind.Explicit)]
     struct UIntFloat
     {

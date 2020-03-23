@@ -68,13 +68,21 @@ public static class NetworkConfig
     public const int firstSchemaContext = 16;
     public const int mapSchemaId = 1;
     public const int firstEventTypeSchemaId = maxFixedSchemaIds;
+    public const int firstEntitySchemaId = maxFixedSchemaIds + maxEventTypeSchemaIds;
 
     public const int miscContext = 0;
     public const int baseSequenceContext = 1;
     public const int baseSequence1Context = 2;
     public const int baseSequence2Context = 3;
     public const int serverTimeContext = 4;
-
+    public const int schemaCountContext = 5;
+    public const int schemaTypeIdContext = 6;
+    public const int spawnCountContext = 7;
+    public const int idContext = 8;
+    public const int spawnTypeIdContext = 9;
+    public const int despawnCountContext = 10;
+    public const int updateCountContext = 11;
+    public const int commandTimeContext = 12;
     public const int eventCountContext = 13;
     public const int eventTypeIdContext = 14;
 
