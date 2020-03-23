@@ -38,6 +38,7 @@ public class NetworkStatisticsClient
     }
 
     const int k_WindowSize = 120;
+    public bool notifyHardCatchup;
 
     FloatRollingAverage m_RTT = new FloatRollingAverage(k_WindowSize);
 }

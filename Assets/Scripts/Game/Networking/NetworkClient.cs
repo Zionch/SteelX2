@@ -48,6 +48,7 @@ public class NetworkClient
     public float timeSinceSnapshot { get { return _clientConnection != null ? NetworkUtils.stopwatch.ElapsedMilliseconds - _clientConnection.snapshotReceivedTime : -1; } }
 
     public ClientConnection _clientConnection { get; private set; }
+    Dictionary<ushort, NetworkEventType> m_EventTypesOut = new Dictionary<ushort, NetworkEventType>();
 
     public bool IsConnected { get { return connectionState == ConnectionState.Connected; } }
 
@@ -98,11 +99,20 @@ public class NetworkClient
         _clientConnection.SendPackage();
     }
 
+    public void QueueEvent(ushort typeId, bool reliable, NetworkEventGenerator generator) {
+        if (_clientConnection == null)
+            return;
+
+        var e = NetworkEvent.Serialize(typeId, reliable, m_EventTypesOut, generator);
+        _clientConnection.QueueEvent(e);
+        e.Release();
+    }
+
     public void OnData(byte[] data, INetworkClientCallbacks clientNetworkConsumer, ISnapshotConsumer snapshotConsumer) {
         if (_clientConnection == null)
             return;
 
-        _clientConnection.ReadPackage(data, snapshotConsumer);
+        _clientConnection.ReadPackage(data, snapshotConsumer, clientNetworkConsumer);
     }
 
     public void OnConnect(int connectionId) {//connect to photon
@@ -141,7 +151,7 @@ public class NetworkClient
             }
         }
 
-        public void ReadPackage(byte[] packageData, ISnapshotConsumer snapshotConsumer) {
+        public void ReadPackage(byte[] packageData, ISnapshotConsumer snapshotConsumer, INetworkCallbacks networkClientConsumer) {
             counters.bytesIn += packageData.Length;
 
             NetworkMessage content;
@@ -169,6 +179,9 @@ public class NetworkClient
                 // does not end up containing stuff from different snapshots
                 //GameDebug.Assert(spawns.Count == 0 && despawns.Count == 0 && updates.Count == 0, "Game did not consume snapshots");
             }
+
+            if ((content & NetworkMessage.Events) != 0)
+                ReadEvents(ref input, networkClientConsumer);
         }
 
         public void ReadClientInfo(ref RawInputStream input) {
@@ -249,6 +262,14 @@ public class NetworkClient
 
             PackageInfo info;
             BeginSendPackage(ref rawOutputStream, out info);
+
+            int endOfHeaderPos = rawOutputStream.Align();
+            var output = default(RawOutputStream);
+            output.Initialize(m_PackageBuffer, endOfHeaderPos);
+
+            WriteEvents(info, ref output);
+            int compressedSize = output.Flush();
+            rawOutputStream.SkipBytes(compressedSize);
 
             CompleteSendPackage(info, ref rawOutputStream);
         }

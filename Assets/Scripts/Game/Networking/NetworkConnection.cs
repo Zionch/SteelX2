@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NetworkCompression;
+using System;
 using System.Collections.Generic;
 
 public class PackageInfo
@@ -6,14 +7,14 @@ public class PackageInfo
     public long SentTime;
     public NetworkMessage Content;
 
-    //public List<NetworkEvent> events = new List<NetworkEvent>(10);
+    public List<NetworkEvent> events = new List<NetworkEvent>(10);
 
     public virtual void Reset() {
         SentTime = 0;
         Content = 0;
-        //foreach (var eventInfo in events)
-        //    eventInfo.Release();
-        //events.Clear();
+        foreach (var eventInfo in events)
+            eventInfo.Release();
+        events.Clear();
     }
 }
 
@@ -31,6 +32,13 @@ public class NetworkConnectionCounters
 
     public int packagesLostIn;                  // The number of incoming packages that was lost (i.e. holes in the package sequence)
     public int packagesLostOut;                 // The number of outgoing packages that wasn't acked (either due to choke or network)
+
+    public int eventsIn;                        // The total number of events received
+    public int eventsOut;                       // The total number of events sent
+    public int eventsLostOut;                   // The number of events that was lost
+
+    public int reliableEventsOut;               // The number of reliable events sent
+    public int reliableEventResendOut;          // The number of reliable events we had to resend
 
     public Aggregator avgBytesIn = new Aggregator();
     public Aggregator avgBytesOut = new Aggregator();
@@ -192,7 +200,35 @@ public class NetworkConnection<TPackageInfo, TCounters> where TPackageInfo : Pac
         headerSize = input.Align();
         return inSequenceNew;
     }
-        
+
+    public void QueueEvent(NetworkEvent info) {
+        eventsOut.Add(info);
+        info.AddRef();
+    }
+
+    public void WriteEvents(TPackageInfo info, ref RawOutputStream output) {
+        if (eventsOut.Count == 0)
+            return;
+
+        foreach (var eventInfo in eventsOut) {
+            counters.eventsOut++;
+            if (eventInfo.reliable)
+                counters.reliableEventsOut++;
+        }
+
+        AddMessageContentFlag(NetworkMessage.Events);
+
+        GameDebug.Assert(info.events.Count == 0);
+        NetworkEvent.WriteEvents(eventsOut, ackedEventTypes, ref output);
+        info.events.AddRange(eventsOut);
+        eventsOut.Clear();
+    }
+
+    public void ReadEvents(ref RawInputStream input, INetworkCallbacks networkConsumer){
+        var numEvents = NetworkEvent.ReadEvents(eventTypesIn, ConnectionId, ref input, networkConsumer);
+        counters.eventsIn += numEvents;
+    }
+
     public void BeginSendPackage(ref BitOutputStream output, out TPackageInfo info) {
         output.WriteBits(0, 8);                                 // Package content flags (will set later as we add messages)
         output.WriteBits(Sequence.ToUInt16(outSequence), 16);
@@ -232,27 +268,31 @@ public class NetworkConnection<TPackageInfo, TCounters> where TPackageInfo : Pac
     protected virtual void NotifyDelivered(int sequence, TPackageInfo info, bool madeIt) {
         if (madeIt) {
             // Release received reliable events
-            //foreach (var eventInfo in info.events) {
-            //    if (!ackedEventTypes.Contains(eventInfo.type))
-            //        ackedEventTypes.Add(eventInfo.type);
-            //    eventInfo.Release();
-            //}
+            foreach (var eventInfo in info.events) {
+                if (!ackedEventTypes.Contains(eventInfo.type))
+                    ackedEventTypes.Add(eventInfo.type);
+                eventInfo.Release();
+            }
         } else {
-            //foreach (var eventInfo in info.events) {
-            //    counters.eventsLostOut++;
-            //    if (eventInfo.reliable) {
-            //        // Re-add dropped reliable events to outgoing events
-            //        counters.reliableEventResendOut++;
-            //        GameDebug.Log("Resending lost reliable event: " + ((GameNetworkEvents.EventType)eventInfo.type.typeId) + ":" + eventInfo.sequence);
-            //        eventsOut.Add(eventInfo);
-            //    } else
-            //        eventInfo.Release();
-            //}
+            foreach (var eventInfo in info.events) {
+                counters.eventsLostOut++;
+                if (eventInfo.reliable) {
+                    // Re-add dropped reliable events to outgoing events
+                    counters.reliableEventResendOut++;
+                    GameDebug.Log("Resending lost reliable event: " + ((GameNetworkEvents.EventType)eventInfo.type.typeId) + ":" + eventInfo.sequence);
+                    eventsOut.Add(eventInfo);
+                } else
+                    eventInfo.Release();
+            }
         }
-        //info.events.Clear();
+        info.events.Clear();
     }
 
     public byte[] m_PackageBuffer = new byte[1024 * 64];    //TODO: fix this
+
+    List<NetworkEventType> ackedEventTypes = new List<NetworkEventType>();
+    Dictionary<ushort, NetworkEventType> eventTypesIn = new Dictionary<ushort, NetworkEventType>();
     public SequenceBuffer<TPackageInfo> outstandingPackages = new SequenceBuffer<TPackageInfo>(64, () => new TPackageInfo());
+    private List<NetworkEvent> eventsOut = new List<NetworkEvent>();
 }
 

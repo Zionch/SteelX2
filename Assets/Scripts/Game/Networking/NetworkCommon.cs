@@ -32,13 +32,15 @@ public interface INetworkCallbacks
 {
     void OnConnect(int clientId);
     void OnDisconnect(int clientId);
-    //void OnEvent(int clientId, NetworkEvent info);
+    void OnEvent(int clientId, NetworkEvent info);
 }
 
 public static class NetworkConfig
 {
     [ConfigVar(Name = "net.printstats", DefaultValue = "0", Description = "Print stats to console every N frame")]
     public static ConfigVar netPrintStats;
+    [ConfigVar(Name = "net.debug", DefaultValue = "0", Description = "Dump lots of debug info about network")]
+    public static ConfigVar netDebug;
 
     public const string TestRoomName = "_test";
     public const int PhotonSendRate = 30;
@@ -65,12 +67,16 @@ public static class NetworkConfig
 
     public const int firstSchemaContext = 16;
     public const int mapSchemaId = 1;
+    public const int firstEventTypeSchemaId = maxFixedSchemaIds;
 
     public const int miscContext = 0;
     public const int baseSequenceContext = 1;
     public const int baseSequence1Context = 2;
     public const int baseSequence2Context = 3;
     public const int serverTimeContext = 4;
+
+    public const int eventCountContext = 13;
+    public const int eventTypeIdContext = 14;
 
     public const int maxEventDataSize = 512;
     public const int maxCommandDataSize = 128;

@@ -123,6 +123,15 @@ public class NetworkServer
             pair.Value.Reset();
     }
 
+    public void MapReady(int clientId) {
+        GameDebug.Log("Client " + clientId + " is ready");
+        if (!_serverConnections.ContainsKey(clientId)) {
+            GameDebug.Log("Got MapReady from unknown client?");
+            return;
+        }
+        _serverConnections[clientId].mapReady = true;
+    }
+
     unsafe public void GenerateSnapshot(ISnapshotGenerator snapshotGenerator, float simTime) {
         var time = snapshotGenerator.WorldTick;
         GameDebug.Assert(time > serverTime);      // Time should always flow forward
@@ -205,7 +214,7 @@ public class NetworkServer
         if (!_serverConnections.ContainsKey(connectionId))
             return;
 
-        _serverConnections[connectionId].ReadPackage(data);
+        _serverConnections[connectionId].ReadPackage(data, loop);
     }
 
     public void OnConnect(int connectionId, INetworkCallbacks loop) {
@@ -244,7 +253,7 @@ public class NetworkServer
             _server = server;
         }
 
-        public void ReadPackage(byte[] packageData) {
+        public void ReadPackage(byte[] packageData, INetworkCallbacks loop) {
             counters.bytesIn += packageData.Length;
 
             NetworkMessage content;
@@ -256,6 +265,9 @@ public class NetworkServer
 
             //if ((content & NetworkMessage.ClientConfig) != 0)
             //    ReadClientConfig(ref input);
+
+            if ((content & NetworkMessage.Events) != 0)
+                ReadEvents(ref input, loop);
         }
 
         //public void ReadClientConfig(ref BitInputStream inpuf) {
@@ -285,9 +297,13 @@ public class NetworkServer
                     WriteMapInfo(ref output);
                 }
             } else {
-                //if (mapReady && server.m_ServerSequence > snapshotServerLastWritten) {
+                // Send snapshot, buf only
+                //   if client has declared itself ready
+                //   if we have not already sent for this tick (because we need to be able to map a snapshot 
+                //     sequence to a package sequence we cannot send the same snapshot multiple times).
+                if (mapReady && _server.m_ServerSequence > snapshotServerLastWritten) {
                     WriteSnapshot(ref output);
-                //}
+                }
             }
 
             int compressedSize = output.Flush();
@@ -384,13 +400,13 @@ public class NetworkServer
 
             // NETTODO: For us serverTime == tick but network layer only cares about a growing int
             output.WritePackedIntDelta(_server.serverTime, haveBaseline ? maxSnapshotTime : 0, NetworkConfig.serverTimeContext);
-            GameDebug.Log($"servere time {_server.serverTime} & {maxSnapshotTime}" + " base : " + haveBaseline.ToString());
             // NETTODO: a more generic way to send stats
             var temp = _server.m_ServerSimTime * 10;
             output.WriteRawBits((byte)temp, 8);
 
 
             snapshotSeqs[outSequence % NetworkConfig.clientAckCacheSize] = _server.m_ServerSequence;
+            snapshotServerLastWritten = _server.m_ServerSequence;
         }
 
         protected override void NotifyDelivered(int sequence, ServerPackageInfo info, bool madeIt) {
@@ -399,12 +415,10 @@ public class NetworkServer
             if (madeIt) {
                 if ((info.Content & NetworkMessage.ClientInfo) != 0) {
                     clientInfoAcked = true;
-                    GameDebug.Log("client acked client info");
                 }
 
                 // Check if the client received the map info
                 if ((info.Content & NetworkMessage.MapInfo) != 0 && info.serverSequence >= _server.m_MapInfo.serverInitSequence) {
-                    GameDebug.Log("client acked map info");
                     mapAcked = true;
                     mapSchemaAcked = true;
                 }
@@ -429,6 +443,7 @@ public class NetworkServer
 
         public void Reset() {
             mapAcked = false;
+            mapReady = false;
             maxSnapshotAck = 0;
             maxSnapshotTime = 0;
         }
@@ -440,10 +455,13 @@ public class NetworkServer
         public int maxSnapshotAck;
         int maxSnapshotTime;
         private int snapshotPackageBaseline;
+        private int snapshotServerLastWritten;
+
+        public bool clientInfoAcked;
+        public bool mapReady;
 
         private bool mapAcked, mapSchemaAcked;
-        public bool clientInfoAcked;
-        NetworkServer _server;
+        private NetworkServer _server;
     }
 
     public Dictionary<int, ServerConnection> GetConnections() {

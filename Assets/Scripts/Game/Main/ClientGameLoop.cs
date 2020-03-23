@@ -68,8 +68,7 @@ public class ClientGameWorld{
         if (resetTime) {
             GameDebug.Log(string.Format("CATCHUP ({0} -> {1})", m_PredictedTime.tick, preferredTick));
 
-            //m_NetworkStatistics.notifyHardCatchup = true;
-            _gameWorld.nextTickTime = Game.frameTime;
+            _networkStatistics.notifyHardCatchup = true;
             m_PredictedTime.tick = preferredTick;
             m_PredictedTime.SetTime(preferredTick, 0);
 
@@ -196,6 +195,8 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks, ISnapshot
 
     private void EnterPlayingState() {
         _clientGameWorld = new ClientGameWorld(_gameWorld, _networkClient, _networkStatisticsClient);
+
+        _networkClient.QueueEvent((ushort)GameNetworkEvents.EventType.PlayerReady, true, (ref NetworkWriter data) => { });
     }
 
     private void UpdatePlayingState() {
@@ -257,6 +258,9 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks, ISnapshot
         GameDebug.Log("map : " + m_LevelName);
         if (_stateMachine.CurrentState() != ClientState.Loading)//in case map update when loading
             _stateMachine.SwitchTo(ClientState.Loading);
+    }
+
+    public void OnEvent(int clientId, NetworkEvent info) {
     }
 
     public void OnConnect(int clientId) {}
