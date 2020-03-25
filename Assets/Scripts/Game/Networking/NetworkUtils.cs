@@ -55,6 +55,40 @@ public static class NetworkUtils
     }
 }
 
+class ByteArrayComp : IEqualityComparer<byte[]>, IComparer<byte[]>
+{
+    public static readonly ByteArrayComp instance = new ByteArrayComp();
+
+    public int Compare(byte[] x, byte[] y) {
+        if (x == null || y == null)
+            throw new ArgumentNullException("Trying to compare array with null");
+        var xl = x.Length;
+        var yl = y.Length;
+        if (xl != yl)
+            return yl - xl;
+        for (int i = 0; i < xl; i++) {
+            var d = y[i] - x[i];
+            if (d != 0)
+                return d;
+        }
+        return 0;
+    }
+
+    public bool Equals(byte[] x, byte[] y) {
+        return Compare(x, y) == 0;
+    }
+
+    public int GetHashCode(byte[] x) {
+        if (x == null)
+            throw new ArgumentNullException("Trying to get hash of null");
+        var xl = x.Length;
+        if (xl >= 4)
+            return (int)(x[0] + (x[1] << 8) + (x[2] << 16) + (x[3] << 24));
+        else
+            return 0;
+    }
+}
+
 public class Aggregator
 {
     const int k_WindowSize = 120;

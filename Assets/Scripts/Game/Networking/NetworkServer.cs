@@ -236,6 +236,12 @@ unsafe public class NetworkServer
         return id;
     }
 
+    public void UnregisterEntity(int id) {
+        Profiler.BeginSample("NetworkServer.UnregisterEntity()");
+        m_Entities[id].despawnSequence = m_ServerSequence + 1;
+        Profiler.EndSample();
+    }
+
     unsafe public void GenerateSnapshot(ISnapshotGenerator snapshotGenerator, float simTime) {
         var time = snapshotGenerator.WorldTick;
         GameDebug.Assert(time > serverTime);      // Time should always flow forward

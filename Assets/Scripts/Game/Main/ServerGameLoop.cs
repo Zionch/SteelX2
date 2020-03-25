@@ -14,9 +14,12 @@ public class ServerGameWorld : ISnapshotGenerator
     }
     public float TickInterval { get { return _gameWorld.worldTime.tickInterval; } }
 
-    public ServerGameWorld(GameWorld world, NetworkServer networkServer) {
+    public ServerGameWorld(GameWorld world, BundledResourceManager resourceSystem, NetworkServer networkServer) {
         _gameWorld = world;
         _networkServer = networkServer;
+
+        m_ReplicatedEntityModule = new ReplicatedEntityModuleServer(_gameWorld, resourceSystem, networkServer);
+        m_ReplicatedEntityModule.ReserveSceneEntities(networkServer);
     }
 
     public void Update() {
@@ -31,6 +34,12 @@ public class ServerGameWorld : ISnapshotGenerator
         _gameWorld.worldTime.tick++;
         _gameWorld.worldTime.tickDuration = _gameWorld.worldTime.tickInterval;
         _gameWorld.frameDuration = _gameWorld.worldTime.tickInterval;
+
+        m_ReplicatedEntityModule.HandleSpawning();
+
+
+
+        m_ReplicatedEntityModule.HandleDespawning();
     }
 
     public void HandlePlayerConnect(int connectionId) {
@@ -42,18 +51,24 @@ public class ServerGameWorld : ISnapshotGenerator
     }
 
     public void Shutdown() {
-
+        m_ReplicatedEntityModule.Shutdown();
     }
 
     public void GenerateEntitySnapshot(int entityId, ref NetworkWriter writer) {
+        Profiler.BeginSample("ServerGameLoop.GenerateEntitySnapshot()");
+
+        m_ReplicatedEntityModule.GenerateEntitySnapshot(entityId, ref writer);
+
+        Profiler.EndSample();
     }
 
     public string GenerateEntityName(int entityId) {
-        return " ";
+        return m_ReplicatedEntityModule.GenerateName(entityId);
     }
 
     private GameWorld _gameWorld;
     private NetworkServer _networkServer;
+    readonly ReplicatedEntityModuleServer m_ReplicatedEntityModule;
 }
 
 public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
@@ -78,7 +93,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         _stateMachine = new StateMachine<ServerState>();
         _stateMachine.Add(ServerState.Connecting, EnterConnectingState, UpdateConnectingState, null);
         _stateMachine.Add(ServerState.Loading, EnterLoadingState, UpdateLoadingState, null);
-        _stateMachine.Add(ServerState.Active, EnterActiveState, UpdateActiveState, null);
+        _stateMachine.Add(ServerState.Active, EnterActiveState, UpdateActiveState, LeaveActiveState);
 
         _networkServer.UpdateClientInfo();
 
@@ -110,7 +125,9 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     private void EnterActiveState() {
         GameDebug.Assert(_serverGameWorld == null);
 
-        _serverGameWorld = new ServerGameWorld(_gameWorld, _networkServer);
+        m_resourceSystem = new BundledResourceManager(_gameWorld, "BundledResources/Server");
+
+        _serverGameWorld = new ServerGameWorld(_gameWorld, m_resourceSystem, _networkServer);
 
         _networkServer.InitializeMap((ref NetworkWriter data) => {
             data.WriteString("name", "testscene");
@@ -169,6 +186,10 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
             //    }
             //}
         }
+    }
+
+    private void LeaveActiveState() {
+        m_resourceSystem.Shutdown();
     }
 
     public void Update() {
@@ -256,6 +277,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         }
     }
 
+    BundledResourceManager m_resourceSystem;
     private NetworkStatisticsServer _networkStatistics;
 
     public double m_nextTickTime = 0;
