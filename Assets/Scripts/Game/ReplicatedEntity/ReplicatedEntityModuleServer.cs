@@ -92,14 +92,14 @@ public class ReplicatedEntityModuleServer
 
     internal void ReserveSceneEntities(NetworkServer networkServer) {
         // TODO remove this
-        //for (var i = 0; i < m_world.SceneEntities.Count; i++) {
-        //    var gameObjectEntity = m_world.SceneEntities[i].GetComponent<GameObjectEntity>();
-        //    var repEntityData = m_world.GetEntityManager()
-        //        .GetComponentData<ReplicatedEntityData>(gameObjectEntity.Entity);
-        //    GameDebug.Assert(repEntityData.id == i, "Scene entities must be have the first network ids!");
-        //}
+        for (var i = 0; i < m_world.SceneEntities.Count; i++) {
+            var gameObjectEntity = m_world.SceneEntities[i].GetComponent<GameObjectEntity>();
+            var repEntityData = m_world.GetEntityManager()
+                .GetComponentData<ReplicatedEntityData>(gameObjectEntity.Entity);
+            GameDebug.Assert(repEntityData.id == i, "Scene entities must be have the first network ids!");
+        }
 
-        //networkServer.ReserveSceneEntities(m_world.SceneEntities.Count);
+        networkServer.ReserveSceneEntities(m_world.SceneEntities.Count);
     }
 
     public void GenerateEntitySnapshot(int entityId, ref NetworkWriter writer) {

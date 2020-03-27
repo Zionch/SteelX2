@@ -52,6 +52,10 @@ public static class NetworkConfig
 
     public const int maxSchemaIds = maxFixedSchemaIds + maxEventTypeSchemaIds + maxEntityTypeSchemaIds;
 
+    // Number of commands the client stores - also maximum number of predictive steps the client can take
+    public const int commandClientBufferSize = 32;
+    public const int commandServerQueueSize = 32;
+
     public const int maxFieldsPerSchema = 128;
     public const int maxContextsPerField = 4;
     public const int maxSkipContextsPerSchema = maxFieldsPerSchema / 4;
@@ -67,6 +71,7 @@ public static class NetworkConfig
 
     public const int firstSchemaContext = 16;
     public const int mapSchemaId = 1;
+    public const int networkClientQueueCommandSchemaId = 0;
     public const int firstEventTypeSchemaId = maxFixedSchemaIds;
     public const int firstEntitySchemaId = maxFixedSchemaIds + maxEventTypeSchemaIds;
 

@@ -13,6 +13,11 @@ public interface ISnapshotGenerator
     string GenerateEntityName(int entityId);
 }
 
+public interface IClientCommandProcessor
+{
+    void ProcessCommand(int connectionId, int tick, ref NetworkReader data);
+}
+
 unsafe public class NetworkServer
 {
     [ConfigVar(Name = "server.debug", DefaultValue = "0", Description = "Enable debug printing of server handshake etc.", Flags = ConfigVar.Flags.None)]
@@ -203,6 +208,14 @@ unsafe public class NetworkServer
         _serverConnections[clientId].mapReady = true;
     }
 
+    // Reserve scene entities with sequential id's starting from 0
+    public void ReserveSceneEntities(int count) {
+        GameDebug.Assert(m_Entities.Count == 0, "ReserveSceneEntities: Only allowed before other entities have been registrered");
+        for (var i = 0; i < count; i++) {
+            m_Entities.Add(new EntityInfo());
+        }
+    }
+
     // Currently predictingClient can only be set on an entity at time of creation
     // in the future it should be something you can change if you for example enter/leave
     // a vehicle. There are subtle but tricky replication issues when predicting 'ownership' changes, though...
@@ -240,6 +253,11 @@ unsafe public class NetworkServer
         Profiler.BeginSample("NetworkServer.UnregisterEntity()");
         m_Entities[id].despawnSequence = m_ServerSequence + 1;
         Profiler.EndSample();
+    }
+
+    public void HandleClientCommands(int tick, IClientCommandProcessor processor) {
+        foreach (var c in _serverConnections)
+            c.Value.ProcessCommands(tick, processor);
     }
 
     unsafe public void GenerateSnapshot(ISnapshotGenerator snapshotGenerator, float simTime) {
@@ -432,6 +450,38 @@ unsafe public class NetworkServer
     {
         public ServerConnection(NetworkServer server, int connectionId, INetworkTransport transport) : base(connectionId, transport) {
             _server = server;
+        }
+
+        unsafe public void ProcessCommands(int maxTime, IClientCommandProcessor processor) {
+            // Check for time jumps backward in the command stream and reset the queue in case
+            // we find one. (This will happen if the client determines that it has gotten too
+            // far ahead and recalculate the client time.)
+
+            // TODO : We should be able to do this in a smarter way
+            for (var sequence = commandSequenceProcessed + 1; sequence <= commandSequenceIn; ++sequence) {
+                CommandInfo previous;
+                CommandInfo current;
+
+                commandsIn.TryGetValue(sequence, out current);
+                commandsIn.TryGetValue(sequence - 1, out previous);
+
+                if (current != null && previous != null && current.time <= previous.time)
+                    commandSequenceProcessed = sequence - 1;
+            }
+
+            for (var sequence = commandSequenceProcessed + 1; sequence <= commandSequenceIn; ++sequence) {
+                CommandInfo info;
+                if (commandsIn.TryGetValue(sequence, out info)) {
+                    if (info.time <= maxTime) {
+                        fixed (uint* data = info.data) {
+                            var reader = new NetworkReader(data, commandSchema);
+                            processor.ProcessCommand(ConnectionId, info.time, ref reader);
+                        }
+                        commandSequenceProcessed = sequence;
+                    } else
+                        return;
+                }
+            }
         }
 
         public void ReadPackage(byte[] packageData, INetworkCallbacks loop) {
@@ -868,11 +918,22 @@ unsafe public class NetworkServer
         private int snapshotPackageBaseline;
         private int snapshotServerLastWritten;
 
+        int commandSequenceIn;
+        int commandSequenceProcessed;
+        NetworkSchema commandSchema;
+        SequenceBuffer<CommandInfo> commandsIn = new SequenceBuffer<CommandInfo>(NetworkConfig.commandServerQueueSize, () => new CommandInfo());
+
         public bool clientInfoAcked;
         public bool mapReady;
 
         private bool mapAcked, mapSchemaAcked;
         private NetworkServer _server;
+
+        class CommandInfo
+        {
+            public int time = 0;
+            public uint[] data = new uint[NetworkConfig.maxCommandDataSize];
+        }
     }
 
     public Dictionary<int, ServerConnection> GetConnections() {

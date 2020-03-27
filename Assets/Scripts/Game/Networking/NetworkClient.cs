@@ -20,6 +20,8 @@ public class NetworkClient
     [ConfigVar(Name = "client.debug", DefaultValue = "0", Description = "Enable debug printing of client handshake etc.", Flags = ConfigVar.Flags.None)]
     public static ConfigVar clientDebug;
 
+    public delegate void DataGenerator(ref NetworkWriter data);
+
     public enum ConnectionState
     {
         Disconnected,
@@ -28,7 +30,7 @@ public class NetworkClient
     }
 
     protected ConnectionState connectionState { get {
-        return _clientConnection == null ? ConnectionState.Disconnected : _clientConnection.connectionState;
+        return clientConnection == null ? ConnectionState.Disconnected : clientConnection.connectionState;
     }}
 
     // Sent from client to server when changed
@@ -36,6 +38,18 @@ public class NetworkClient
     {
         public int serverUpdateRate;            // max bytes/sec
         public int serverUpdateInterval;        // requested tick / update
+    }
+
+    public class ClientPackageInfo : PackageInfo
+    {
+        public int commandTime;
+        public int commandSequence;
+
+        public override void Reset() {
+            base.Reset();
+            commandTime = 0;
+            commandSequence = 0;
+        }
     }
 
     public class Counters : NetworkConnectionCounters
@@ -79,14 +93,22 @@ public class NetworkClient
             NetworkConfig.snapshotDeltaCacheSize, NetworkConfig.maxEntitySnapshotDataSize);
     }
 
+    class CommandInfo
+    {
+        public int time = 0;
+        public uint[] data = new uint[512];
+    }
+
     private INetworkTransport _transport;
     private ClientConfig _clientConfig;
-    public int serverTime { get { return _clientConnection != null ? _clientConnection.serverTime : -1; } }
-    public int serverTickRate { get { return _clientConnection != null ? _clientConnection.serverTickRate : 60; } }
-    public int rtt { get { return _clientConnection != null ? _clientConnection.rtt : 0; } }
-    public float timeSinceSnapshot { get { return _clientConnection != null ? NetworkUtils.stopwatch.ElapsedMilliseconds - _clientConnection.snapshotReceivedTime : -1; } }
+    public int clientId { get { return clientConnection != null ? clientConnection.ConnectionId : -1; } }
+    public int serverTime { get { return clientConnection != null ? clientConnection.serverTime : -1; } }
+    public int serverTickRate { get { return clientConnection != null ? clientConnection.serverTickRate : 60; } }
+    public int rtt { get { return clientConnection != null ? clientConnection.rtt : 0; } }
+    public float timeSinceSnapshot { get { return clientConnection != null ? NetworkUtils.stopwatch.ElapsedMilliseconds - clientConnection.snapshotReceivedTime : -1; } }
+    public int lastAcknowlegdedCommandTime { get { return clientConnection != null ? clientConnection.lastAcknowlegdedCommandTime : -1; } }
 
-    public ClientConnection _clientConnection { get; private set; }
+    public ClientConnection clientConnection;
     Dictionary<ushort, NetworkEventType> m_EventTypesOut = new Dictionary<ushort, NetworkEventType>();
 
     public bool IsConnected { get { return connectionState == ConnectionState.Connected; } }
@@ -102,11 +124,18 @@ public class NetworkClient
 
     public void Connect() {
         GameDebug.Assert(connectionState == ConnectionState.Disconnected);
-        GameDebug.Assert(_clientConnection == null);
+        GameDebug.Assert(clientConnection == null);
 
         _transport.Connect();
 
-        _clientConnection = new ClientConnection(0, _transport, _clientConfig);//0 is temp. , wait server send our id
+        clientConnection = new ClientConnection(0, _transport, _clientConfig);//0 is temp. , wait server send our id
+    }
+
+    public void QueueCommand(int time, DataGenerator generator) {
+        if (clientConnection == null)
+            return;
+
+        clientConnection.QueueCommand(time, generator);
     }
 
     public void Update(INetworkClientCallbacks clientNetworkConsumer, ISnapshotConsumer snapshotConsumer) {
@@ -127,31 +156,31 @@ public class NetworkClient
             }
         }
 
-        if (_clientConnection != null)
-            _clientConnection.ProcessMapUpdate(clientNetworkConsumer);
+        if (clientConnection != null)
+            clientConnection.ProcessMapUpdate(clientNetworkConsumer);
     }
 
     public void SendData() {
-        if (_clientConnection == null)
+        if (clientConnection == null)
             return;
 
-        _clientConnection.SendPackage();
+        clientConnection.SendPackage();
     }
 
     public void QueueEvent(ushort typeId, bool reliable, NetworkEventGenerator generator) {
-        if (_clientConnection == null)
+        if (clientConnection == null)
             return;
 
         var e = NetworkEvent.Serialize(typeId, reliable, m_EventTypesOut, generator);
-        _clientConnection.QueueEvent(e);
+        clientConnection.QueueEvent(e);
         e.Release();
     }
 
     public void OnData(byte[] data, INetworkClientCallbacks clientNetworkConsumer, ISnapshotConsumer snapshotConsumer) {
-        if (_clientConnection == null)
+        if (clientConnection == null)
             return;
 
-        _clientConnection.ReadPackage(data, snapshotConsumer, clientNetworkConsumer);
+        clientConnection.ReadPackage(data, snapshotConsumer, clientNetworkConsumer);
     }
 
     public void OnConnect(int connectionId) {//connect to photon
@@ -159,13 +188,13 @@ public class NetworkClient
     }
 
     public void OnDisconnect(int connectionId) {
-        if (_clientConnection == null) return;
+        if (clientConnection == null) return;
         
         GameDebug.Log("Disconnected");
-        _clientConnection = null;
+        clientConnection = null;
     }
 
-    public class ClientConnection : NetworkConnection<PackageInfo, NetworkClient.Counters>
+    public class ClientConnection : NetworkConnection<ClientPackageInfo, NetworkClient.Counters>
     {
         public ConnectionState connectionState = ConnectionState.Connecting;
         private ClientConfig _clientConfig;
@@ -174,6 +203,7 @@ public class NetworkClient
         public float serverSimTime;                     // Server simulation time (actualy time spent doing simulation regardless of tickrate)
 
         public ClientConnection(int connectionId, INetworkTransport transport, ClientConfig clientConfig) :  base(connectionId, transport){
+            _clientConfig = clientConfig;
         }
 
         public void Reset() {
@@ -520,7 +550,7 @@ public class NetworkClient
 
             // todo : only if there is anything to send
 
-            PackageInfo info;
+            ClientPackageInfo info;
             BeginSendPackage(ref rawOutputStream, out info);
 
             int endOfHeaderPos = rawOutputStream.Align();
@@ -532,6 +562,35 @@ public class NetworkClient
             rawOutputStream.SkipBytes(compressedSize);
 
             CompleteSendPackage(info, ref rawOutputStream);
+        }
+
+        unsafe public void QueueCommand(int time, DataGenerator generator) {
+            var generateSchema = (commandSchema == null);
+            if (generateSchema)
+                commandSchema = new NetworkSchema(NetworkConfig.networkClientQueueCommandSchemaId);
+
+            var info = commandsOut.Acquire(++commandSequence);
+
+            info.time = time;
+            fixed (uint* buf = info.data) {
+                var writer = new NetworkWriter(buf, info.data.Length, commandSchema, generateSchema);
+                generator(ref writer);
+                writer.Flush();
+            }
+        }
+
+        protected override void NotifyDelivered(int sequence, ClientPackageInfo info, bool madeIt) {
+            base.NotifyDelivered(sequence, info, madeIt);
+            if (madeIt) {
+                if (info.commandSequence > commandSequenceAck) {
+                    commandSequenceAck = info.commandSequence;
+                    lastAcknowlegdedCommandTime = info.commandTime;
+                }
+            } else {
+                // Resend user config if the package was lost
+                //if ((info.content & NetworkMessage.ClientConfig) != 0)
+                //    sendClientConfig = true;
+            }
         }
 
         class MapInfo
@@ -557,6 +616,13 @@ public class NetworkClient
         List<int> updates = new List<int>();
 
         List<int> m_TempSpawnList = new List<int>();
+
+        public int lastAcknowlegdedCommandTime;
+        int commandSequence;
+        int lastSentCommandSeq = 0;
+        int commandSequenceAck;
+        NetworkSchema commandSchema;
+        SequenceBuffer<CommandInfo> commandsOut = new SequenceBuffer<CommandInfo>(3, () => new CommandInfo());
 
         public int serverTickRate;
         public int serverTime;

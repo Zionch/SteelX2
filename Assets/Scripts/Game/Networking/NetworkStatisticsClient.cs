@@ -22,7 +22,7 @@ public class NetworkStatisticsClient
     }
 
     private void PrintStats() {
-        var client = m_NetworkClient._clientConnection;
+        var client = m_NetworkClient.clientConnection;
         if (client == null) return;
 
         Console.Write(string.Format("   {0,2} {1,-5} {2,-5} {3,-5} {4,-5} {5,-5} {6,-5} {7,-5} {8,-5} {9,-5}",

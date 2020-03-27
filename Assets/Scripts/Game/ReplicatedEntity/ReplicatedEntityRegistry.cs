@@ -9,7 +9,7 @@ using UnityEditor;
 
 
 [CreateAssetMenu(fileName = "ReplicatedEntityRegistry",
-    menuName = "FPS Sample/ReplicatedEntity/ReplicatedEntityRegistry")]
+    menuName = "SteelX/ReplicatedEntity/ReplicatedEntityRegistry")]
 public class ReplicatedEntityRegistry : RegistryBase
 {
     [Serializable]

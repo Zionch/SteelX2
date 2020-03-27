@@ -49,6 +49,30 @@ public class GameWorld
         m_EntityManager = m_ECSWorld.EntityManager;
 
         m_destroyDespawningSystem = m_ECSWorld.CreateSystem<DestroyDespawning>();
+
+        if (gameobjectHierarchy.IntValue == 1) {
+            m_sceneRoot = new GameObject(name);
+            GameObject.DontDestroyOnLoad(m_sceneRoot);
+        }
+    }
+
+    // SceneRoot can be used to organize crated gameobject in scene view. Is null in standalone.
+    public GameObject SceneRoot {
+        get { return m_sceneRoot; }
+    }
+
+    public void RegisterSceneEntities() {
+        // Replicated entities are sorted by their netID and numbered accordingly
+        var sceneEntities = new List<ReplicatedEntity>(Object.FindObjectsOfType<ReplicatedEntity>());
+        sceneEntities.Sort((a, b) => ByteArrayComp.instance.Compare(a.netID, b.netID));
+        for (int i = 0; i < sceneEntities.Count; i++) {
+            var gameObjectEntity = sceneEntities[i].GetComponent<GameObjectEntity>();
+
+            var replicatedEntityData = gameObjectEntity.EntityManager.GetComponentData<ReplicatedEntityData>(gameObjectEntity.Entity);
+            replicatedEntityData.id = i;
+            gameObjectEntity.EntityManager.SetComponentData(gameObjectEntity.Entity, replicatedEntityData);
+        }
+        m_sceneEntities.AddRange(sceneEntities);
     }
 
     public World GetECSWorld() {
@@ -60,7 +84,7 @@ public class GameWorld
     }
 
     public void Shutdown() {
-
+        GameObject.Destroy(m_sceneRoot);
     }
 
     public T Spawn<T>(GameObject prefab) where T : Component {
@@ -202,4 +226,9 @@ public class GameWorld
 
     EntityManager m_EntityManager;
     World m_ECSWorld;
+
+    GameObject m_sceneRoot;
+
+    [ConfigVar(Name = "gameobjecthierarchy", Description = "Should gameobject be organized in a gameobject hierarchy", DefaultValue = "0")]
+    static ConfigVar gameobjectHierarchy;
 }

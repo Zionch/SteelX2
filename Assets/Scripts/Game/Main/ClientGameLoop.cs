@@ -14,10 +14,14 @@ public class ClientGameWorld{
         get { return m_RenderTime; }
     }
 
-    public ClientGameWorld(GameWorld world, NetworkClient networkClient, NetworkStatisticsClient _networkStatistics) {
+    public ClientGameWorld(GameWorld world, NetworkClient networkClient, NetworkStatisticsClient _networkStatistics, BundledResourceManager resourceSystem) {
         _gameWorld = world;
         _networkClient = networkClient;
         this._networkStatistics = _networkStatistics;
+
+        m_PlayerModule = new PlayerModuleClient(_gameWorld);
+        m_ReplicatedEntityModule = new ReplicatedEntityModuleClient(_gameWorld, resourceSystem);
+
     }
 
     // This is called at the actual client frame rate, so may be faster or slower than tickrate.
@@ -28,7 +32,20 @@ public class ClientGameWorld{
         _gameWorld.frameDuration = frameDuration;
         _gameWorld.lastServerTick = _networkClient.serverTime;
 
-        //todo: Prediction
+        m_PlayerModule.ResolveReferenceFromLocalPlayerToPlayer();
+        m_PlayerModule.HandleCommandReset();
+        m_ReplicatedEntityModule.UpdateControlledEntityFlags();
+
+        // Handle spawn requests
+
+        // Handle spawning  
+        m_PlayerModule.HandleSpawn();
+
+        // Update movement of scene objects. Projectiles and grenades can also start update as they use collision data from last frame
+
+        m_ReplicatedEntityModule.Interpolate(m_RenderTime);
+
+        // Prediction
     }
 
     public void LateUpdate(float delta) {
@@ -42,6 +59,15 @@ public class ClientGameWorld{
             m_PredictedTime.tickRate = _networkClient.serverTickRate;
             m_RenderTime.tickRate = _networkClient.serverTickRate;
         }
+
+        // Sample input into current command
+        //  The time passed in here is used to calculate the amount of rotation from stick position
+        //  The command stores final view direction
+        //bool chatOpen = Game.game.clientFrontend != null && Game.game.clientFrontend.chatPanel.isOpen;
+        //bool userInputEnabled = Game.GetMousePointerLock() && !chatOpen;
+        bool userInputEnabled = true;
+
+        m_PlayerModule.SampleInput(userInputEnabled, Time.deltaTime, m_RenderTime.tick);
 
         int prevTick = m_PredictedTime.tick;
 
@@ -73,12 +99,12 @@ public class ClientGameWorld{
             m_PredictedTime.SetTime(preferredTick, 0);
 
         } else {
-            //int bufferedCommands = m_NetworkClient.lastAcknowlegdedCommandTime - m_NetworkClient.serverTime;
-            //if (bufferedCommands < preferredBufferedCommandCount)
-            //    frameTimeScale = 1.01f;
+            int bufferedCommands = _networkClient.lastAcknowlegdedCommandTime - _networkClient.serverTime;
+            if (bufferedCommands < preferredBufferedCommandCount)
+                frameTimeScale = 1.01f;
 
-            //if (bufferedCommands > preferredBufferedCommandCount)
-            //    frameTimeScale = 0.99f;
+            if (bufferedCommands > preferredBufferedCommandCount)
+                frameTimeScale = 0.99f;
         }
 
         // Increment interpolation time
@@ -101,22 +127,29 @@ public class ClientGameWorld{
 
         // If predicted time has entered a new tick the stored commands should be sent to server 
         if (m_PredictedTime.tick > prevTick) {
-            //var oldestCommandToSend = Mathf.Max(prevTick, m_PredictedTime.tick - NetworkConfig.commandClientBufferSize);
-            //for (int tick = oldestCommandToSend; tick < m_PredictedTime.tick; tick++) {
-            //    m_PlayerModule.StoreCommand(tick);
-            //    m_PlayerModule.SendCommand(tick);
-            //}
+            var oldestCommandToSend = Mathf.Max(prevTick, m_PredictedTime.tick - NetworkConfig.commandClientBufferSize);
+            for (int tick = oldestCommandToSend; tick < m_PredictedTime.tick; tick++) {
+                m_PlayerModule.StoreCommand(tick);
+                m_PlayerModule.SendCommand(tick);
+            }
 
-            //m_PlayerModule.ResetInput(userInputEnabled);
-            //m_PlayerModule.StoreCommand(m_PredictedTime.tick);
+            m_PlayerModule.ResetInput(userInputEnabled);
+            m_PlayerModule.StoreCommand(m_PredictedTime.tick);
         }
 
         // Store command
-        //m_PlayerModule.StoreCommand(m_PredictedTime.tick);
+        m_PlayerModule.StoreCommand(m_PredictedTime.tick);
+    }
+
+    public LocalPlayer RegisterLocalPlayer(int playerId) {
+        m_ReplicatedEntityModule.SetLocalPlayerId(playerId);
+        m_localPlayer = m_PlayerModule.RegisterLocalPlayer(playerId, _networkClient);
+        return m_localPlayer;
     }
 
     public void Shutdown() {
-
+        m_ReplicatedEntityModule.Shutdown();
+        m_PlayerModule.Shutdown();
     }
 
     public float frameTimeScale = 1.0f;
@@ -126,6 +159,10 @@ public class ClientGameWorld{
     private GameWorld _gameWorld;
     private NetworkClient _networkClient;
     private NetworkStatisticsClient _networkStatistics;
+
+    LocalPlayer m_localPlayer;
+    readonly ReplicatedEntityModuleClient m_ReplicatedEntityModule;
+    readonly PlayerModuleClient m_PlayerModule;
 }
 
 public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks, ISnapshotConsumer
@@ -194,7 +231,15 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks, ISnapshot
     }
 
     private void EnterPlayingState() {
-        _clientGameWorld = new ClientGameWorld(_gameWorld, _networkClient, _networkStatisticsClient);
+        //GameDebug.Assert(m_clientWorld == null && Game.game.levelManager.IsCurrentLevelLoaded());
+
+        _gameWorld.RegisterSceneEntities();
+
+        m_resourceSystem = new BundledResourceManager(_gameWorld, "BundledResources/Client");
+
+        _clientGameWorld = new ClientGameWorld(_gameWorld, _networkClient, _networkStatisticsClient, m_resourceSystem);
+
+        m_LocalPlayer = _clientGameWorld.RegisterLocalPlayer(_networkClient.clientId);
 
         _networkClient.QueueEvent((ushort)GameNetworkEvents.EventType.PlayerReady, true, (ref NetworkWriter data) => { });
     }
@@ -214,7 +259,13 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks, ISnapshot
     }
 
     private void LeavePlayingState() {
+        m_LocalPlayer = null;
+
+        m_resourceSystem.Shutdown();
+
         _clientGameWorld.Shutdown();
+
+        _gameWorld.Shutdown();
     }
 
     private void EnterLeavingState() {
@@ -279,5 +330,8 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks, ISnapshot
     private string m_LevelName;
     private bool m_performGameWorldLateUpdate;
     private double m_lastFrameTime;
+
+    LocalPlayer m_LocalPlayer;
+    BundledResourceManager m_resourceSystem;
 }
 

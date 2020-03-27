@@ -1,7 +1,9 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using Unity.Entities;
+using UnityEngine;
 using UnityEngine.Profiling;
 
-public class ServerGameWorld : ISnapshotGenerator
+public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 {
     public int WorldTick { get { return _gameWorld.worldTime.tick; } }
     public int TickRate {
@@ -14,12 +16,17 @@ public class ServerGameWorld : ISnapshotGenerator
     }
     public float TickInterval { get { return _gameWorld.worldTime.tickInterval; } }
 
-    public ServerGameWorld(GameWorld world, BundledResourceManager resourceSystem, NetworkServer networkServer) {
+    public ServerGameWorld(GameWorld world, BundledResourceManager resourceSystem, Dictionary<int, ServerGameLoop.ClientInfo> clients, NetworkServer networkServer) {
         _gameWorld = world;
         _networkServer = networkServer;
+        m_Clients = clients;
 
+        m_PlayerModule = new PlayerModuleServer(_gameWorld, resourceSystem);
+        m_CharacterModule = new CharacterModuleServer(_gameWorld, resourceSystem);
         m_ReplicatedEntityModule = new ReplicatedEntityModuleServer(_gameWorld, resourceSystem, networkServer);
         m_ReplicatedEntityModule.ReserveSceneEntities(networkServer);
+
+        m_GameModeSystem = _gameWorld.GetECSWorld().CreateSystem<GameModeSystemServer>(_gameWorld, resourceSystem);
     }
 
     public void Update() {
@@ -30,27 +37,86 @@ public class ServerGameWorld : ISnapshotGenerator
 
     }
 
+    public void ProcessCommand(int connectionId, int tick, ref NetworkReader data) {
+        ServerGameLoop.ClientInfo client;
+        if (!m_Clients.TryGetValue(connectionId, out client))
+            return;
+
+        if (client.player) {
+            var serializeContext = new SerializeContext {
+                entityManager = _gameWorld.GetEntityManager(),
+                entity = Entity.Null,
+                refSerializer = null,
+                tick = tick
+            };
+
+            if (tick == _gameWorld.worldTime.tick)
+                client.latestCommand.Deserialize(ref serializeContext, ref data);
+
+            // Pass on command to controlled entity
+            if (client.player.controlledEntity != Entity.Null) {
+                var userCommand = _gameWorld.GetEntityManager().GetComponentData<UserCommandComponentData>(
+                    client.player.controlledEntity);
+
+                userCommand.command = client.latestCommand;
+
+                _gameWorld.GetEntityManager().SetComponentData<UserCommandComponentData>(
+                    client.player.controlledEntity, userCommand);
+            }
+        }
+    }
+
     public void ServerTickUpdate() {
         _gameWorld.worldTime.tick++;
         _gameWorld.worldTime.tickDuration = _gameWorld.worldTime.tickInterval;
         _gameWorld.frameDuration = _gameWorld.worldTime.tickInterval;
 
+        // This call backs into ProcessCommand
+        _networkServer.HandleClientCommands(_gameWorld.worldTime.tick, this);
+
+        GameTime gameTime = new GameTime(_gameWorld.worldTime.tickRate);
+        gameTime.SetTime(_gameWorld.worldTime.tick, _gameWorld.worldTime.tickInterval);
+
+        // Handle spawn requests. All creation of game entities should happen in this phase        
+        m_CharacterModule.HandleSpawnRequests();
+
+        // Handle newly spawned entities          
+        m_CharacterModule.HandleSpawns();
         m_ReplicatedEntityModule.HandleSpawning();
 
+        // Start movement of scene objects. Scene objects that player movement
+        // depends on should finish movement in this phase
 
+        // Update movement of player controlled units 
 
+        // Finalize movement of modules that only depend on data from previous frames
+        // We want to wait as long as possible so queries potentially can be handled in jobs  
+
+        // Handle damage
+
+        //m_CharacterModule.PresentationUpdate();
+
+        m_GameModeSystem.Update();
+
+        // Handle despawns
+        m_CharacterModule.HandleDespawns();
         m_ReplicatedEntityModule.HandleDespawning();
+        _gameWorld.ProcessDespawns();
     }
 
-    public void HandlePlayerConnect(int connectionId) {
-
+    public void HandleClientConnect(ServerGameLoop.ClientInfo client) {
+        client.player = m_PlayerModule.CreatePlayer(_gameWorld, client.id, "", client.isReady);
     }
 
-    public void HandlePlayerDisconnect(int connectionId) {
-
+    public void HandleClientDisconnect(ServerGameLoop.ClientInfo client) {
+        m_PlayerModule.CleanupPlayer(client.player);
+        m_CharacterModule.CleanupPlayer(client.player);
     }
 
     public void Shutdown() {
+        m_CharacterModule.Shutdown();
+        m_PlayerModule.Shutdown();
+
         m_ReplicatedEntityModule.Shutdown();
     }
 
@@ -68,6 +134,11 @@ public class ServerGameWorld : ISnapshotGenerator
 
     private GameWorld _gameWorld;
     private NetworkServer _networkServer;
+    Dictionary<int, ServerGameLoop.ClientInfo> m_Clients;
+
+    readonly GameModeSystemServer m_GameModeSystem;
+    readonly PlayerModuleServer m_PlayerModule;
+    readonly CharacterModuleServer m_CharacterModule;
     readonly ReplicatedEntityModuleServer m_ReplicatedEntityModule;
 }
 
@@ -125,9 +196,11 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     private void EnterActiveState() {
         GameDebug.Assert(_serverGameWorld == null);
 
+        _gameWorld.RegisterSceneEntities();
+
         m_resourceSystem = new BundledResourceManager(_gameWorld, "BundledResources/Server");
 
-        _serverGameWorld = new ServerGameWorld(_gameWorld, m_resourceSystem, _networkServer);
+        _serverGameWorld = new ServerGameWorld(_gameWorld, m_resourceSystem, m_Clients, _networkServer);
 
         _networkServer.InitializeMap((ref NetworkWriter data) => {
             data.WriteString("name", "testscene");
@@ -241,26 +314,36 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     }
 
     public void OnConnect(int clientId) {
-        if(_serverGameWorld != null)
-            _serverGameWorld.HandlePlayerConnect(clientId);
+        var client = new ClientInfo();
+        client.id = clientId;
+        m_Clients.Add(clientId, client);
+
+        if (_serverGameWorld != null)
+            _serverGameWorld.HandleClientConnect(client);
     }
 
     public void OnDisconnect(int clientId) {
-        if (_serverGameWorld != null)
-            _serverGameWorld.HandlePlayerDisconnect(clientId);
+        ClientInfo client;
+        if (m_Clients.TryGetValue(clientId, out client)) {
+            if (_serverGameWorld != null)
+                _serverGameWorld.HandleClientDisconnect(client);
+
+            m_Clients.Remove(clientId);
+        }
     }
 
     unsafe public void OnEvent(int clientId, NetworkEvent info) {
+        var client = m_Clients[clientId];
         var type = info.type.typeId;
+
         fixed (uint* data = info.data) {
             var reader = new NetworkReader(data, info.type.schema);
 
             switch ((GameNetworkEvents.EventType)type) {
                 case GameNetworkEvents.EventType.PlayerReady:
                 _networkServer.MapReady(clientId); // TODO hacky
-                //client.isReady = true;
+                client.isReady = true;
                 break;
-
                 //case GameNetworkEvents.EventType.PlayerSetup:
                 //client.playerSettings.Deserialize(ref reader);
                 //if (client.player != null)
@@ -277,8 +360,18 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         }
     }
 
+    public class ClientInfo
+    {
+        public int id;
+        public PlayerSettings playerSettings = new PlayerSettings();
+        public bool isReady;
+        public PlayerState player;
+        public UserCommand latestCommand = UserCommand.defaultCommand;
+    }
+
     BundledResourceManager m_resourceSystem;
     private NetworkStatisticsServer _networkStatistics;
+    Dictionary<int, ClientInfo> m_Clients = new Dictionary<int, ClientInfo>();
 
     public double m_nextTickTime = 0;
     
