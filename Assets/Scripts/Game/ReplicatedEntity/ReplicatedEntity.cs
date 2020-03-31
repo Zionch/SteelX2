@@ -69,8 +69,8 @@ public class ReplicatedEntity : ComponentDataProxy<ReplicatedEntityData>
         if (EditorApplication.isPlaying)
             return;
 
-        PrefabType prefabType = PrefabUtility.GetPrefabType(this);
-        if (prefabType == PrefabType.Prefab || prefabType == PrefabType.ModelPrefab) {
+        PrefabAssetType prefabType = PrefabUtility.GetPrefabAssetType(this);
+        if (prefabType == PrefabAssetType.NotAPrefab || prefabType == PrefabAssetType.Model) {
             netID = null;
         } else
             SetUniqueNetID();
@@ -153,8 +153,8 @@ public class UpdateReplicatedOwnerFlag : BaseComponentSystem
     }
 
     protected override void OnUpdate() {
-        var entityArray = RepEntityDataGroup.ToEntityArray(Allocator.Temp);
-        var repEntityDataArray = RepEntityDataGroup.ToComponentDataArray<ReplicatedEntityData>(Allocator.Temp);
+        var entityArray = RepEntityDataGroup.ToEntityArray(Allocator.TempJob);
+        var repEntityDataArray = RepEntityDataGroup.ToComponentDataArray<ReplicatedEntityData>(Allocator.TempJob);
         for (int i = 0; i < entityArray.Length; i++) {
             var repDataEntity = repEntityDataArray[i];
             var locallyControlled = m_localPlayerId == -1 || repDataEntity.predictingPlayerId == m_localPlayerId;

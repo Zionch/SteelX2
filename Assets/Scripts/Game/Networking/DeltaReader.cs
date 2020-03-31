@@ -27,7 +27,6 @@ public struct DeltaReader
             GameDebug.Assert(field.byteOffset == index * 4);
             int fieldStartContext = field.startContext;
 
-
             byte fieldByteOffset = (byte)((uint)i >> 3);
             byte fieldBitOffset = (byte)((uint)i & 0x7);
 

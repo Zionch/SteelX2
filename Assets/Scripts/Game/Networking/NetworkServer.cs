@@ -316,7 +316,7 @@ unsafe public class NetworkServer
             // Skip entities that are depawned
             if (entity.despawnSequence > 0)
                 continue;
-
+            
             // If we are here and are despawned, we must be a despawn/spawn in same frame situation
             GameDebug.Assert(entity.despawnSequence == 0 || entity.despawnSequence == entity.spawnSequence, "Snapshotting entity that was deleted in the past?");
             GameDebug.Assert(entity.despawnSequence == 0 || entity.despawnSequence == m_ServerSequence, "WUT");
@@ -421,11 +421,13 @@ unsafe public class NetworkServer
             _connectionState = ConnectionState.Connected;
             return;
         }
-        GameDebug.Log($"Player {connectionId} is connected");
+        GameDebug.Log($"Player {connectionId} is connected.");
 
         if (!_serverConnections.ContainsKey(connectionId)) {
             _serverConnections.Add(connectionId, new ServerConnection(this, connectionId, _transport));
         }
+
+        loop.OnConnect(connectionId);
     }
 
     public void OnDisconnect(int connectionId, INetworkCallbacks loop) {
@@ -484,15 +486,18 @@ unsafe public class NetworkServer
             }
         }
 
+        byte[] packageBuffer = new byte[1024];
         public void ReadPackage(byte[] packageData, INetworkCallbacks loop) {
             counters.bytesIn += packageData.Length;
+
+            Array.Copy(packageData, 0, packageBuffer, 0, packageData.Length);
 
             NetworkMessage content;
 
             int headerSize;
-            var packageSequence = ProcessPackageHeader(packageData, out content, out headerSize);
+            var packageSequence = ProcessPackageHeader(packageBuffer, out content, out headerSize);
 
-            var input = new RawInputStream(packageData, headerSize);
+            var input = new RawInputStream(packageBuffer, headerSize);
 
             //if ((content & NetworkMessage.ClientConfig) != 0)
             //    ReadClientConfig(ref input);
@@ -823,7 +828,7 @@ unsafe public class NetworkServer
                 output.WritePackedIntDelta(id, previousId, NetworkConfig.idContext);
                 previousId = id;
 
-                // TODO (petera) It is a mess that we have to repeat the logic about tickToSend from above here
+                // TODO It is a mess that we have to repeat the logic about tickToSend from above here
                 int tickToSend = _server.m_ServerSequence;
                 if (entity.despawnSequence > 0)
                     tickToSend = Mathf.Max(entity.despawnSequence - 1, entity.updateSequence);
@@ -848,7 +853,7 @@ unsafe public class NetworkServer
                 // NOTE : As long as the server haven't gotten the spawn acked, it will keep sending
                 // delta relative to 0 as we cannot know if we have a valid baseline on the client or not
                 uint entity_hash = 0;
-                //var bef = output.GetBitPosition2();
+                //ar bef = output.GetBitPosition2();
                 DeltaWriter.Write(ref output, entityType.schema, snapshotInfo.start, prediction, entity.fieldsChangedPrediction, entity.GetFieldMask(ConnectionId), ref entity_hash);
                 //var aft = output.GetBitPosition2();
                 //if (serverDebug.IntValue > 0) {
@@ -857,6 +862,7 @@ unsafe public class NetworkServer
                 //}
 
             }
+
             if (!haveBaseline && serverDebug.IntValue > 0) {
                 Debug.Log("Sending no-baseline snapshot. C: " + ConnectionId + " Seq: " + outSequence + " Max: " + maxSnapshotAck + "  Total entities sent: " + _server.m_TempUpdateList.Count + " Type breakdown:");
                 //foreach (var c in _server.m_EntityTypes) {

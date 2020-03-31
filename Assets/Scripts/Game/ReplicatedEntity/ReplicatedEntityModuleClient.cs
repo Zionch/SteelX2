@@ -47,7 +47,6 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
         int index = typeId;
 
         // If factory present it should be used to create entity
-
         GameDebug.Assert(index < m_assetRegistry.entries.Count, "TypeId:" + typeId + " not in range. Array Length:" + m_assetRegistry.entries.Count);
 
         var entity = m_resourceSystem.CreateEntity(m_assetRegistry.entries[index].guid);
@@ -56,33 +55,8 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
             return;
         }
 
-        //        
-        //        var factory = m_assetRegistry.entries[index].factory;
-        //        if (factory)
-        //        {
-        //            var entity = factory.Create(m_world.GetEntityManager(), m_resourceSystem, m_world);
-        //
-        //            var replicatedDataEntity = m_world.GetEntityManager().GetComponentData<ReplicatedEntityData>(entity);
-        //            replicatedDataEntity.id = id;
-        //            m_world.GetEntityManager().SetComponentData(entity, replicatedDataEntity);
-        //
-        //            m_entityCollection.Register(m_world.GetEntityManager(),id, entity);
-        //            
-        //            return;
-        //        }
-
         {
             Profiler.BeginSample("ReplicatedEntitySystemClient.ProcessEntitySpawns()");
-
-            //            var prefabGuid = m_assetRegistry.entries[index].prefab.guid;
-            //            var prefab = (GameObject)m_resourceSystem.LoadSingleAssetResource(prefabGuid);
-            //
-            //            Entity entity;
-            //            var gameObject = m_world.SpawnInternal(prefab, new Vector3(), Quaternion.identity, out entity);
-            //            gameObject.name = prefab.name + "_" + id;
-            //        
-            //            if(m_SystemRoot != null)
-            //                gameObject.transform.SetParent(m_SystemRoot.transform);
 
             var replicatedDataEntity = m_world.GetEntityManager().GetComponentData<ReplicatedEntityData>(entity);
             replicatedDataEntity.id = id;

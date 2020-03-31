@@ -1,4 +1,5 @@
 ﻿using NetworkCompression;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine.Profiling;
@@ -224,19 +225,22 @@ public class NetworkClient
             }
         }
 
+        byte[] packageBuffer = new byte[1024];
         public void ReadPackage(byte[] packageData, ISnapshotConsumer snapshotConsumer, INetworkCallbacks networkClientConsumer) {
             counters.bytesIn += packageData.Length;
 
+            Array.Copy(packageData, 0, packageBuffer, 0, packageData.Length);
+
             NetworkMessage content;
             int headerSize;
-            var packageSequence = ProcessPackageHeader(packageData, out content, out headerSize);
+            var packageSequence = ProcessPackageHeader(packageBuffer, out content, out headerSize);
             // The package was dropped (duplicate or too old) or if it was a fragment not yet assembled, bail out here
             if (packageSequence == 0) {
                 return;
             }
 
             var input = new RawInputStream();
-            input.Initialize(packageData, headerSize);
+            input.Initialize(packageBuffer, headerSize);
 
             if ((content & NetworkMessage.ClientInfo) != 0)
                 ReadClientInfo(ref input);
@@ -430,6 +434,68 @@ public class NetworkClient
                 GameDebug.Assert(!despawns.Contains(id), "Double despawn in same snaphot? {0}", id);
                 despawns.Add(id);
             }
+
+            // Predict all active entities
+            for (var id = 0; id < entities.Count; id++) {
+                var info = entities[id];
+                if (info.type == null)
+                    continue;
+
+                // NOTE : As long as the server haven't gotten the spawn acked, it will keep sending
+                // delta relative to 0, so we need to check if the entity was in the spawn list to determine
+                // if the delta is relative to the last update or not
+
+                int baseline0Time = 0;
+
+                uint[] baseline0 = info.type.baseline;
+                GameDebug.Assert(baseline0 != null, "Unable to find schema baseline for type {0}", info.type.typeId);
+
+                if (haveBaseline && !m_TempSpawnList.Contains(id)) {
+                    baseline0 = info.baselines.FindMax(baseSequence);
+                    GameDebug.Assert(baseline0 != null, "Unable to find baseline for seq {0} for id {1}", baseSequence, id);
+                    baseline0Time = snapshots[baseSequence].serverTime;
+                }
+
+                if (enableNetworkPrediction) {
+                    uint num_baselines = 1; // 1 because either we have schema baseline or we have a real baseline
+                    int baseline1Time = 0;
+                    int baseline2Time = 0;
+
+                    uint[] baseline1 = null;
+                    uint[] baseline2 = null;
+                    if (baseSequence1 != baseSequence) {
+                        baseline1 = info.baselines.FindMax(baseSequence1);
+                        if (baseline1 != null) {
+                            num_baselines = 2;
+                            baseline1Time = snapshots[baseSequence1].serverTime;
+                        }
+                        if (baseSequence2 != baseSequence1) {
+                            baseline2 = info.baselines.FindMax(baseSequence2);
+                            if (baseline2 != null) {
+                                num_baselines = 3;
+                                baseline2Time = snapshots[baseSequence2].serverTime;
+                            }
+                        }
+                    }
+
+                    // TODO (petera) are these clears needed?
+                    for (int i = 0, c = info.fieldsChangedPrediction.Length; i < c; ++i)
+                        info.fieldsChangedPrediction[i] = 0;
+                    for (int i = 0; i < NetworkConfig.maxEntitySnapshotDataSize; i++)
+                        info.prediction[i] = 0;
+
+                    fixed (uint* prediction = info.prediction, baseline0p = baseline0, baseline1p = baseline1, baseline2p = baseline2) {
+                        NetworkPrediction.PredictSnapshot(prediction, info.fieldsChangedPrediction, info.type.schema, num_baselines, (uint)baseline0Time, baseline0p, (uint)baseline1Time, baseline1p, (uint)baseline2Time, baseline2p, (uint)snapshotInfo.serverTime, info.fieldMask);
+                    }
+                } else {
+                    var f = info.fieldsChangedPrediction;
+                    for (var i = 0; i < f.Length; ++i)
+                        f[i] = 0;
+                    for (int i = 0, c = info.type.schema.GetByteSize() / 4; i < c; ++i)
+                        info.prediction[i] = baseline0[i];
+                }
+            }
+
             // Read updates
             var updateCount = input.ReadPackedUInt(NetworkConfig.updateCountContext);
             for (var updateIndex = 0; updateIndex < updateCount; ++updateIndex) {
@@ -531,6 +597,7 @@ public class NetworkClient
             spawns.Clear();
 
             foreach (var id in updates) {
+                GameDebug.Log("update id : " + id);
                 var info = entities[id];
                 GameDebug.Assert(info.type != null, "Processing update of id {0} but type is null", id);
                 fixed (uint* data = info.lastUpdate) {

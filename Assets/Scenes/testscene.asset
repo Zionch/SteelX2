@@ -9,7 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6da38339b25349a4c8938f6165d4cc58, type: 3}
-  m_Name: ReplicatedEntityRegistry
+  m_Script: {fileID: 11500000, guid: c1d5276cb96ea0c479fffb326e4405b6, type: 3}
+  m_Name: testscene
   m_EditorClassIdentifier: 
-  entries: []
+  main_scene: {fileID: 102900000, guid: 89238adc81d972846aa0ad42b450c19b, type: 3}
+  levelType: 1
+  includeInBuild: 1

@@ -38,14 +38,21 @@ public class Team
 public class GameModeSystemServer : ComponentSystem
 {
     EntityQuery m_PlayersComponentGroup;
+    GameWorld _gameWorld;
+
+    public GameModeSystemServer(GameWorld gameWorld) {
+        _gameWorld = gameWorld;
+    }
 
     protected override void OnCreate() {
         base.OnCreate();
+
+        m_PlayersComponentGroup = GetEntityQuery(typeof(PlayerState));
     }
 
     protected override void OnUpdate() {
         var playerStates = m_PlayersComponentGroup.ToComponentArray<PlayerState>();
-        var playerEntities = m_PlayersComponentGroup.ToEntityArray(Allocator.Temp);
+        var playerEntities = m_PlayersComponentGroup.ToEntityArray(Allocator.TempJob);
         //var playerCharacterControls = m_PlayersComponentGroup.ToComponentArray<PlayerCharacterControl>();
 
         for (int i = 0, c = playerStates.Length; i < c; ++i) {

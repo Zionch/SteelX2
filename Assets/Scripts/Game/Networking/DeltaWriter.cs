@@ -6,7 +6,7 @@ using UnityEngine;
 public struct DeltaWriter
 {
     static byte[] fieldsNotPredicted = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
-    unsafe static public void Write(ref RawOutputStream output, NetworkSchema schema, uint* inputData, uint* baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint entity_hash) {
+    unsafe static public void Write(ref RawOutputStream output, NetworkSchema schema, uint* inputData, uint* baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint entity_hash){
         GameDebug.Assert(baselineData != null);
 
         int numFields = schema.numFields;

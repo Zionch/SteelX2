@@ -69,7 +69,7 @@ public static class NetworkConfig
     // e.g. 128 / (60 / 20) = 128 / 3, but since client.updaterate <= server.tickrate we use
     public const int clientAckCacheSize = snapshotDeltaCacheSize;
 
-    public const int firstSchemaContext = 16;
+   
     public const int mapSchemaId = 1;
     public const int networkClientQueueCommandSchemaId = 0;
     public const int firstEventTypeSchemaId = maxFixedSchemaIds;
@@ -90,6 +90,8 @@ public static class NetworkConfig
     public const int commandTimeContext = 12;
     public const int eventCountContext = 13;
     public const int eventTypeIdContext = 14;
+    public const int skipContext = 15;
+    public const int firstSchemaContext = 16;
 
     public const int maxEventDataSize = 512;
     public const int maxCommandDataSize = 128;

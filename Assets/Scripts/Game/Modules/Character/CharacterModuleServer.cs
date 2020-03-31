@@ -20,7 +20,6 @@ public struct CharacterSpawnRequest : IComponentData
 
     public static void Create(EntityCommandBuffer commandBuffer, int characterType, Vector3 position, Quaternion rotation, Entity playerEntity) {
         var data = new CharacterSpawnRequest(characterType, position, rotation, playerEntity);
-        GameDebug.Log("created spawn character request");
         commandBuffer.AddComponent(commandBuffer.CreateEntity(), data);
     }
 }
@@ -68,11 +67,11 @@ public class HandleCharacterSpawnRequests : BaseComponentSystem
     }
 
     protected override void OnUpdate() {
-        var requestArray = SpawnGroup.ToComponentDataArray<CharacterSpawnRequest>(Allocator.Temp);
+        var requestArray = SpawnGroup.ToComponentDataArray<CharacterSpawnRequest>(Allocator.TempJob);
         if (requestArray.Length == 0)
             return;
 
-        var requestEntityArray = SpawnGroup.ToEntityArray(Allocator.Temp);
+        var requestEntityArray = SpawnGroup.ToEntityArray(Allocator.TempJob);
 
         // Copy requests as spawning will invalidate Group
         var spawnRequests = new CharacterSpawnRequest[requestArray.Length];
@@ -146,11 +145,11 @@ public class HandleCharacterDespawnRequests : BaseComponentSystem
     }
 
     protected override void OnUpdate() {
-        var requestArray = DespawnGroup.ToComponentDataArray<CharacterDespawnRequest>(Allocator.Temp);
+        var requestArray = DespawnGroup.ToComponentDataArray<CharacterDespawnRequest>(Allocator.TempJob);
         if (requestArray.Length != 0) {
             Profiler.BeginSample("HandleCharacterDespawnRequests");
 
-            var requestEntityArray = DespawnGroup.ToEntityArray(Allocator.Temp);
+            var requestEntityArray = DespawnGroup.ToEntityArray(Allocator.TempJob);
 
             for (var i = 0; i < requestArray.Length; i++) {
                 var request = requestArray[i];

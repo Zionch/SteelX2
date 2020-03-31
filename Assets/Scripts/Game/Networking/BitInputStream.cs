@@ -46,7 +46,7 @@ public struct BitInputStream
     public uint ReadBits(int numbits) {
         GameDebug.Assert(numbits > 0 && numbits <= 32);
 
-        while (m_CurrentBitIdx < 32 && m_CurrentByteIdx < m_Buffer.Length) {
+        while (m_CurrentBitIdx < 32) {
             m_BitStage |= (UInt64)m_Buffer[m_CurrentByteIdx++] << m_CurrentBitIdx;
             m_CurrentBitIdx += 8;
         }

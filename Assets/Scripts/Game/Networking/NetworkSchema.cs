@@ -537,7 +537,7 @@ unsafe public class NetworkSchema
         return size;
     }
 
-    public static NetworkSchema ReadSchema(ref RawInputStream input){
+    public static NetworkSchema ReadSchema(ref RawInputStream input) {
         int count = (int)input.ReadPackedUInt(NetworkConfig.miscContext);
         int id = (int)input.ReadPackedUInt(NetworkConfig.miscContext);
         var schema = new NetworkSchema(id);
@@ -570,7 +570,7 @@ unsafe public class NetworkSchema
         }
     }
 
-    unsafe public static void CopyFieldsFromBuffer(NetworkSchema schema, uint* inputBuffer, ref RawOutputStream output){
+    unsafe public static void CopyFieldsFromBuffer(NetworkSchema schema, uint* inputBuffer, ref RawOutputStream output) {
         int index = 0;
 
         int fieldIndex = 0;
@@ -617,7 +617,7 @@ unsafe public class NetworkSchema
         }
     }
 
-    unsafe public static void CopyFieldsToBuffer(NetworkSchema schema, ref RawInputStream input, uint[] outputBuffer){
+    unsafe public static void CopyFieldsToBuffer(NetworkSchema schema, ref RawInputStream input, uint[] outputBuffer) {
         var index = 0;
         for (var fieldIndex = 0; fieldIndex < schema.fieldsInternal.Count; ++fieldIndex) {
             var field = schema.fieldsInternal[fieldIndex];

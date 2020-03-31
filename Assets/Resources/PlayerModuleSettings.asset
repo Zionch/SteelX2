@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PlayerModuleSettings
   m_EditorClassIdentifier: 
   playerStatePrefab:
-    val0: 0
-    val1: 0
-    val2: 0
-    val3: 0
+    val0: -1872304369
+    val1: 1746151618
+    val2: 1370963112
+    val3: -1579036902

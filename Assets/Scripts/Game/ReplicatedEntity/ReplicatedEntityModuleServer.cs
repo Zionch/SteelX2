@@ -14,8 +14,8 @@ public class HandleReplicatedEntityDataSpawn : InitializeComponentDataSystem<Rep
 
     protected override void Initialize(Entity entity, ReplicatedEntityData spawned) {
         var typeId = m_assetRegistry.GetEntryIndex(spawned.assetGuid);
+        
         spawned.id = m_network.RegisterEntity(spawned.id, (ushort)typeId, spawned.predictingPlayerId);
-
         m_entityCollection.Register(EntityManager, spawned.id, entity);
 
         PostUpdateCommands.SetComponent(entity, spawned);

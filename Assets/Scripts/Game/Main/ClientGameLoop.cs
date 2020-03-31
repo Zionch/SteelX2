@@ -152,6 +152,11 @@ public class ClientGameWorld{
         m_PlayerModule.Shutdown();
     }
 
+    public ISnapshotConsumer GetSnapshotConsumer() {
+        return m_ReplicatedEntityModule;
+    }
+
+
     public float frameTimeScale = 1.0f;
     private GameTime m_RenderTime = new GameTime(60);
     private GameTime m_PredictedTime = new GameTime(60);
@@ -165,7 +170,7 @@ public class ClientGameWorld{
     readonly PlayerModuleClient m_PlayerModule;
 }
 
-public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks, ISnapshotConsumer
+public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
 {
     private enum ClientState
     {
@@ -216,18 +221,27 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks, ISnapshot
     }
 
     private void EnterLoadingState() {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-
-        SceneManager.LoadScene(m_LevelName, LoadSceneMode.Additive);
-    }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
-        _stateMachine.SwitchTo(ClientState.Playing);
-
-        SceneManager.sceneLoaded -= OnSceneLoaded;
+        Console.SetOpen(false);
     }
 
     private void UpdateLoadingState() {
+        // Wait until we got level info
+        if (m_LevelName == null)
+            return;
+
+        // Load if we are not already loading
+        var level = Game.Instance.levelManager.currentLevel;
+        if (level == null || level.name != m_LevelName) {
+            if (!Game.Instance.levelManager.LoadLevel(m_LevelName)) {
+                _networkClient.Disconnect();
+                return;
+            }
+            level = Game.Instance.levelManager.currentLevel;
+        }
+
+        // Wait for level to be loaded
+        if (level.state == LevelState.Loaded)
+            _stateMachine.SwitchTo(ClientState.Playing);
     }
 
     private void EnterPlayingState() {
@@ -277,7 +291,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks, ISnapshot
     }
 
     public void Update() {
-        _networkClient.Update(this, this);
+        _networkClient.Update(this, _clientGameWorld?.GetSnapshotConsumer());
 
         _networkClient.SendData();
         _networkStatisticsClient.Update();
@@ -317,15 +331,6 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks, ISnapshot
     public void OnConnect(int clientId) {}
 
     public void OnDisconnect(int clientId) {}
-
-    public void ProcessEntityDespawns(int serverTime, List<int> despawns) {
-    }
-
-    public void ProcessEntitySpawn(int serverTime, int id, ushort typeId) {
-    }
-
-    public void ProcessEntityUpdate(int serverTime, int id, ref NetworkReader reader) {
-    }
 
     private string m_LevelName;
     private bool m_performGameWorldLateUpdate;

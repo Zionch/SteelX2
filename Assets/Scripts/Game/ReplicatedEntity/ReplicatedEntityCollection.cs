@@ -73,7 +73,7 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
         }
 
 
-        // Grow to make sure there is room for entity            
+        // Grow to make sure there is room for entity      
         if (entityId >= m_replicatedData.Count) {
             var count = entityId - m_replicatedData.Count + 1;
             var emptyData = new ReplicatedData();
@@ -198,7 +198,7 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
 
     public void ProcessEntityUpdate(int serverTick, int id, ref NetworkReader reader) {
         var data = m_replicatedData[id];
-
+        GameDebug.Log("process update : " + id);
         GameDebug.Assert(data.lastServerUpdate < serverTick, "Failed to apply snapshot. Wrong tick order. entityId:{0} snapshot tick:{1} last server tick:{2}", id, serverTick, data.lastServerUpdate);
         data.lastServerUpdate = serverTick;
 
@@ -220,7 +220,6 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
         var data = m_replicatedData[entityId];
 
         GameDebug.Assert(data.serializableArray != null, "Failed to generate snapshot. Serializablearray is null");
-
         foreach (var entry in data.serializableArray)
             entry.Serialize(ref writer);
 
@@ -269,8 +268,6 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
         }
     }
 
-
-
     public string GenerateName(int entityId) {
         var data = m_replicatedData[entityId];
 
@@ -305,11 +302,15 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
 
     public void DeserializeReference(ref NetworkReader reader, ref Entity entity) {
         var replicatedId = reader.ReadInt32();
+        GameDebug.Log("replicated id : " + replicatedId + " , len : " + m_replicatedData.Count);
         if (replicatedId < 0) {
             entity = Entity.Null;
             return;
         }
-
+        if(replicatedId >= m_replicatedData.Count) {
+            GameDebug.Log("id exceeds");
+            return;
+        }
         entity = m_replicatedData[replicatedId].entity;
     }
 

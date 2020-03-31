@@ -16,8 +16,7 @@ public class PlayerModuleServer
 
     public PlayerState CreatePlayer(GameWorld world, int playerId, string playerName, bool isReady) {
         var prefab = (GameObject)m_resourceSystem.GetSingleAssetResource(m_settings.playerStatePrefab);
-
-
+        GameDebug.Log("Spawn player : " + playerId);
         var gameObjectEntity = m_world.Spawn<GameObjectEntity>(prefab);
         var entityManager = gameObjectEntity.EntityManager;
         var entity = gameObjectEntity.Entity;

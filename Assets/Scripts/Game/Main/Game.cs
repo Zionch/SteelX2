@@ -74,10 +74,13 @@ public class Game : MonoBehaviour
     [ConfigVar(Name = "config.inverty", DefaultValue = "0", Description = "Invert y mouse axis", Flags = ConfigVar.Flags.Save)]
     public static ConfigVar configInvertY;
 
+    public static readonly string k_BootConfigFilename = "boot.cfg";
+
     public System.Diagnostics.Stopwatch Clock { get; private set; }
     private long m_StopwatchFrequency;
 
     public static InputSystem inputSystem;
+    public LevelManager levelManager;
 
     public static class Input
     {
@@ -131,6 +134,7 @@ public class Game : MonoBehaviour
 
     private void Awake() {
         Instance = this;
+        DontDestroyOnLoad(gameObject);
 
         ConfigVar.Init();  
 
@@ -152,6 +156,8 @@ public class Game : MonoBehaviour
 
         Console.SetOpen(true);
 
+        levelManager = new LevelManager();
+        levelManager.Init();
         inputSystem = new InputSystem();
     }
 
@@ -193,6 +199,7 @@ public class Game : MonoBehaviour
                 foreach (var gameLoop in _gameLoops) {
                     gameLoop.Update();
                 }
+                levelManager.Update();
             }
         } catch(System.Exception e) {
             HandleGameloopException(e);
@@ -243,6 +250,7 @@ public class Game : MonoBehaviour
             Console.Init(consoleUI);
         } else {//in-game UI
             var consoleUI = Instantiate(Resources.Load<ConsoleGUI>("Prefabs/ConsoleGUI"));
+            DontDestroyOnLoad(consoleUI);
             Console.Init(consoleUI);
         }
     }
@@ -266,6 +274,17 @@ public class Game : MonoBehaviour
             gameLoop.Shutdown();
         }
         _gameLoops.Clear();
+    }
+
+    public static T GetGameLoop<T>() where T : class {
+        if (Instance == null)
+            return null;
+        foreach (var gameLoop in Instance._gameLoops) {
+            T result = gameLoop as T;
+            if (result != null)
+                return result;
+        }
+        return null;
     }
 
     private void OnDestroy() {
@@ -292,6 +311,8 @@ public class Game : MonoBehaviour
     }
 
     void CmdBoot(string[] args) {
+        levelManager.UnloadLevel();
+
         ShutdownGameLoops();
     }
 
@@ -310,6 +331,10 @@ public class Game : MonoBehaviour
 
     public static bool IsHeadless { get; private set; }
     private bool _errorState;
+
+    public static int GameLoopCount {
+        get { return Instance == null ? 0 : 1; }
+    }
 
     private List<IGameLoop> _gameLoops = new List<IGameLoop>();
     private List<System.Type> _requestedGameLoopTypes = new List<System.Type>();

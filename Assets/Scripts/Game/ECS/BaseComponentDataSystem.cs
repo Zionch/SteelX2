@@ -37,7 +37,7 @@ public abstract class BaseComponentSystem<T1> : BaseComponentSystem
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var entityArray = Group.ToEntityArray(Allocator.Temp);
+        var entityArray = Group.ToEntityArray(Allocator.TempJob);
         var dataArray = Group.ToComponentArray<T1>();
 
         for (var i = 0; i < entityArray.Length; i++) {
@@ -75,7 +75,7 @@ public abstract class BaseComponentSystem<T1, T2> : BaseComponentSystem
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var entityArray = Group.ToEntityArray(Allocator.Temp);
+        var entityArray = Group.ToEntityArray(Allocator.TempJob);
         var dataArray1 = Group.ToComponentArray<T1>();
         var dataArray2 = Group.ToComponentArray<T2>();
 
@@ -116,7 +116,7 @@ public abstract class BaseComponentSystem<T1, T2, T3> : BaseComponentSystem
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var entityArray = Group.ToEntityArray(Allocator.Temp);
+        var entityArray = Group.ToEntityArray(Allocator.TempJob);
         var dataArray1 = Group.ToComponentArray<T1>();
         var dataArray2 = Group.ToComponentArray<T2>();
         var dataArray3 = Group.ToComponentArray<T3>();
@@ -155,8 +155,8 @@ public abstract class BaseComponentDataSystem<T1> : BaseComponentSystem
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var entityArray = Group.ToEntityArray(Allocator.Temp);
-        var dataArray = Group.ToComponentDataArray<T1>(Allocator.Temp);
+        var entityArray = Group.ToEntityArray(Allocator.TempJob);
+        var dataArray = Group.ToComponentDataArray<T1>(Allocator.TempJob);
 
         for (var i = 0; i < entityArray.Length; i++) {
             Update(entityArray[i], dataArray[i]);
@@ -195,9 +195,9 @@ public abstract class BaseComponentDataSystem<T1, T2> : BaseComponentSystem
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var entityArray = Group.ToEntityArray(Allocator.Temp);
-        var dataArray1 = Group.ToComponentDataArray<T1>(Allocator.Temp);
-        var dataArray2 = Group.ToComponentDataArray<T2>(Allocator.Temp);
+        var entityArray = Group.ToEntityArray(Allocator.TempJob);
+        var dataArray1 = Group.ToComponentDataArray<T1>(Allocator.TempJob);
+        var dataArray2 = Group.ToComponentDataArray<T2>(Allocator.TempJob);
 
         for (var i = 0; i < entityArray.Length; i++) {
             Update(entityArray[i], dataArray1[i], dataArray2[i]);
@@ -238,10 +238,10 @@ public abstract class BaseComponentDataSystem<T1, T2, T3> : BaseComponentSystem
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var entityArray = Group.ToEntityArray(Allocator.Temp);
-        var dataArray1 = Group.ToComponentDataArray<T1>(Allocator.Temp);
-        var dataArray2 = Group.ToComponentDataArray<T2>(Allocator.Temp);
-        var dataArray3 = Group.ToComponentDataArray<T3>(Allocator.Temp);
+        var entityArray = Group.ToEntityArray(Allocator.TempJob);
+        var dataArray1 = Group.ToComponentDataArray<T1>(Allocator.TempJob);
+        var dataArray2 = Group.ToComponentDataArray<T2>(Allocator.TempJob);
+        var dataArray3 = Group.ToComponentDataArray<T3>(Allocator.TempJob);
 
         for (var i = 0; i < entityArray.Length; i++) {
             Update(entityArray[i], dataArray1[i], dataArray2[i], dataArray3[i]);
@@ -285,11 +285,11 @@ public abstract class BaseComponentDataSystem<T1, T2, T3, T4> : BaseComponentSys
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var entityArray = Group.ToEntityArray(Allocator.Temp);
-        var dataArray1 = Group.ToComponentDataArray<T1>(Allocator.Temp);
-        var dataArray2 = Group.ToComponentDataArray<T2>(Allocator.Temp);
-        var dataArray3 = Group.ToComponentDataArray<T3>(Allocator.Temp);
-        var dataArray4 = Group.ToComponentDataArray<T4>(Allocator.Temp);
+        var entityArray = Group.ToEntityArray(Allocator.TempJob);
+        var dataArray1 = Group.ToComponentDataArray<T1>(Allocator.TempJob);
+        var dataArray2 = Group.ToComponentDataArray<T2>(Allocator.TempJob);
+        var dataArray3 = Group.ToComponentDataArray<T3>(Allocator.TempJob);
+        var dataArray4 = Group.ToComponentDataArray<T4>(Allocator.TempJob);
 
         for (var i = 0; i < entityArray.Length; i++) {
             Update(entityArray[i], dataArray1[i], dataArray2[i], dataArray3[i], dataArray4[i]);
@@ -334,12 +334,12 @@ public abstract class BaseComponentDataSystem<T1, T2, T3, T4, T5> : BaseComponen
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var entityArray = Group.ToEntityArray(Allocator.Temp);
-        var dataArray1 = Group.ToComponentDataArray<T1>(Allocator.Temp);
-        var dataArray2 = Group.ToComponentDataArray<T2>(Allocator.Temp);
-        var dataArray3 = Group.ToComponentDataArray<T3>(Allocator.Temp);
-        var dataArray4 = Group.ToComponentDataArray<T4>(Allocator.Temp);
-        var dataArray5 = Group.ToComponentDataArray<T5>(Allocator.Temp);
+        var entityArray = Group.ToEntityArray(Allocator.TempJob);
+        var dataArray1 = Group.ToComponentDataArray<T1>(Allocator.TempJob);
+        var dataArray2 = Group.ToComponentDataArray<T2>(Allocator.TempJob);
+        var dataArray3 = Group.ToComponentDataArray<T3>(Allocator.TempJob);
+        var dataArray4 = Group.ToComponentDataArray<T4>(Allocator.TempJob);
+        var dataArray5 = Group.ToComponentDataArray<T5>(Allocator.TempJob);
 
         for (var i = 0; i < entityArray.Length; i++) {
             Update(entityArray[i], dataArray1[i], dataArray2[i], dataArray3[i], dataArray4[i], dataArray5[i]);
@@ -377,7 +377,7 @@ public abstract class InitializeComponentSystem<T> : BaseComponentSystem
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var incomingEntityArray = IncomingGroup.ToEntityArray(Allocator.Temp);
+        var incomingEntityArray = IncomingGroup.ToEntityArray(Allocator.TempJob);
         if (incomingEntityArray.Length > 0) {
             var incomingComponentArray = IncomingGroup.ToComponentArray<T>();
             for (var i = 0; i < incomingComponentArray.Length; i++) {
@@ -416,9 +416,9 @@ public abstract class InitializeComponentDataSystem<T, K> : BaseComponentSystem
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var incomingEntityArray = IncomingGroup.ToEntityArray(Allocator.Temp);
+        var incomingEntityArray = IncomingGroup.ToEntityArray(Allocator.TempJob);
         if (incomingEntityArray.Length > 0) {
-            var incomingComponentDataArray = IncomingGroup.ToComponentDataArray<T>(Allocator.Temp);
+            var incomingComponentDataArray = IncomingGroup.ToComponentDataArray<T>(Allocator.TempJob);
             for (var i = 0; i < incomingComponentDataArray.Length; i++) {
                 var entity = incomingEntityArray[i];
                 PostUpdateCommands.AddComponent(entity, new K());
@@ -454,7 +454,7 @@ public abstract class DeinitializeComponentSystem<T> : BaseComponentSystem
         Profiler.BeginSample(name);
 
         var outgoingComponentArray = OutgoingGroup.ToComponentArray<T>();
-        var outgoingEntityArray = OutgoingGroup.ToEntityArray(Allocator.Temp);
+        var outgoingEntityArray = OutgoingGroup.ToEntityArray(Allocator.TempJob);
         for (var i = 0; i < outgoingComponentArray.Length; i++) {
             Deinitialize(outgoingEntityArray[i], outgoingComponentArray[i]);
         }
@@ -484,8 +484,8 @@ public abstract class DeinitializeComponentDataSystem<T> : BaseComponentSystem
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var outgoingComponentArray = OutgoingGroup.ToComponentDataArray<T>(Allocator.Temp);
-        var outgoingEntityArray = OutgoingGroup.ToEntityArray(Allocator.Temp);
+        var outgoingComponentArray = OutgoingGroup.ToComponentDataArray<T>(Allocator.TempJob);
+        var outgoingEntityArray = OutgoingGroup.ToEntityArray(Allocator.TempJob);
         for (var i = 0; i < outgoingComponentArray.Length; i++) {
             Deinitialize(outgoingEntityArray[i], outgoingComponentArray[i]);
         }
@@ -517,7 +517,7 @@ public abstract class InitializeComponentGroupSystem<T, S> : BaseComponentSystem
     protected override void OnUpdate() {
         Profiler.BeginSample(name);
 
-        var incomingEntityArray = IncomingGroup.ToEntityArray(Allocator.Temp);
+        var incomingEntityArray = IncomingGroup.ToEntityArray(Allocator.TempJob);
         if (incomingEntityArray.Length > 0) {
             for (var i = 0; i < incomingEntityArray.Length; i++) {
                 var entity = incomingEntityArray[i];

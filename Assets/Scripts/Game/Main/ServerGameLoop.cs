@@ -26,7 +26,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         m_ReplicatedEntityModule = new ReplicatedEntityModuleServer(_gameWorld, resourceSystem, networkServer);
         m_ReplicatedEntityModule.ReserveSceneEntities(networkServer);
 
-        m_GameModeSystem = _gameWorld.GetECSWorld().CreateSystem<GameModeSystemServer>(_gameWorld, resourceSystem);
+        m_GameModeSystem = _gameWorld.GetECSWorld().CreateSystem<GameModeSystemServer>(_gameWorld);
     }
 
     public void Update() {
@@ -207,6 +207,10 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         });
 
         m_nextTickTime = Game.frameTime;
+
+        foreach (var pair in m_Clients) {
+            _serverGameWorld.HandleClientConnect(pair.Value);
+        }
     }
 
     private void UpdateActiveState() {

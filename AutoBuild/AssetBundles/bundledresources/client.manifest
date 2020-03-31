@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3887492022
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 5950f56f993383f4538bfb7a996841ee
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 48b364161b23bf8599f26353e40ff0da
+HashAppended: 0
+ClassTypes:
+- Class: 114
+  Script: {fileID: 11500000, guid: 870c47b6581a10847a69e566a73e0dd8, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 6da38339b25349a4c8938f6165d4cc58, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+Assets:
+- Assets/BundledResources/Client.asset
+Dependencies: []
