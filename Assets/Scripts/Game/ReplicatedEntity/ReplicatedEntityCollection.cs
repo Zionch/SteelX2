@@ -198,7 +198,6 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
 
     public void ProcessEntityUpdate(int serverTick, int id, ref NetworkReader reader) {
         var data = m_replicatedData[id];
-        GameDebug.Log("process update : " + id);
         GameDebug.Assert(data.lastServerUpdate < serverTick, "Failed to apply snapshot. Wrong tick order. entityId:{0} snapshot tick:{1} last server tick:{2}", id, serverTick, data.lastServerUpdate);
         data.lastServerUpdate = serverTick;
 
@@ -302,13 +301,8 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
 
     public void DeserializeReference(ref NetworkReader reader, ref Entity entity) {
         var replicatedId = reader.ReadInt32();
-        GameDebug.Log("replicated id : " + replicatedId + " , len : " + m_replicatedData.Count);
         if (replicatedId < 0) {
             entity = Entity.Null;
-            return;
-        }
-        if(replicatedId >= m_replicatedData.Count) {
-            GameDebug.Log("id exceeds");
             return;
         }
         entity = m_replicatedData[replicatedId].entity;

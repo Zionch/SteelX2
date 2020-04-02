@@ -35,14 +35,14 @@ public class DestroyDespawning : ComponentSystem
 
 public class GameWorld
 {
-    public GameTime worldTime;
+    public GameTime WorldTime;
 
     public int lastServerTick;
 
     public float frameDuration;
 
     public GameWorld(string name) {
-        worldTime.tickRate = 60;
+        WorldTime.tickRate = 60;
 
         m_ECSWorld = World.DefaultGameObjectInjectionWorld;
 

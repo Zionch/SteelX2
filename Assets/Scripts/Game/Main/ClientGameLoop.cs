@@ -28,7 +28,7 @@ public class ClientGameWorld{
     public void Update(float frameDuration) {
         // Advances time and accumulate input into the UserCommand being generated
         HandleTime(frameDuration);
-        _gameWorld.worldTime = m_RenderTime;
+        _gameWorld.WorldTime = m_RenderTime;
         _gameWorld.frameDuration = frameDuration;
         _gameWorld.lastServerTick = _networkClient.serverTime;
 
@@ -65,7 +65,7 @@ public class ClientGameWorld{
         //  The command stores final view direction
         //bool chatOpen = Game.game.clientFrontend != null && Game.game.clientFrontend.chatPanel.isOpen;
         //bool userInputEnabled = Game.GetMousePointerLock() && !chatOpen;
-        bool userInputEnabled = true;
+        bool userInputEnabled = Game.GetMousePointerLock();
 
         m_PlayerModule.SampleInput(userInputEnabled, Time.deltaTime, m_RenderTime.tick);
 
@@ -77,7 +77,7 @@ public class ClientGameWorld{
 
         // Adjust time to be synchronized with server
         int preferredBufferedCommandCount = 2;
-        int preferredTick = _networkClient.serverTime + (int)(((_networkClient.timeSinceSnapshot + _networkStatistics.rtt.average) / 1000.0f) * _gameWorld.worldTime.tickRate) + preferredBufferedCommandCount;
+        int preferredTick = _networkClient.serverTime + (int)(((_networkClient.timeSinceSnapshot + _networkStatistics.rtt.average) / 1000.0f) * _gameWorld.WorldTime.tickRate) + preferredBufferedCommandCount;
         
         bool resetTime = false;
         if (!resetTime && m_PredictedTime.tick < preferredTick - 3) {

@@ -5,16 +5,16 @@ using UnityEngine.Profiling;
 
 public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 {
-    public int WorldTick { get { return _gameWorld.worldTime.tick; } }
+    public int WorldTick { get { return _gameWorld.WorldTime.tick; } }
     public int TickRate {
         get {
-            return _gameWorld.worldTime.tickRate;
+            return _gameWorld.WorldTime.tickRate;
         }
         set {
-            _gameWorld.worldTime.tickRate = value;
+            _gameWorld.WorldTime.tickRate = value;
         }
     }
-    public float TickInterval { get { return _gameWorld.worldTime.tickInterval; } }
+    public float TickInterval { get { return _gameWorld.WorldTime.tickInterval; } }
 
     public ServerGameWorld(GameWorld world, BundledResourceManager resourceSystem, Dictionary<int, ServerGameLoop.ClientInfo> clients, NetworkServer networkServer) {
         _gameWorld = world;
@@ -50,7 +50,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
                 tick = tick
             };
 
-            if (tick == _gameWorld.worldTime.tick)
+            if (tick == _gameWorld.WorldTime.tick)
                 client.latestCommand.Deserialize(ref serializeContext, ref data);
 
             // Pass on command to controlled entity
@@ -67,15 +67,12 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     }
 
     public void ServerTickUpdate() {
-        _gameWorld.worldTime.tick++;
-        _gameWorld.worldTime.tickDuration = _gameWorld.worldTime.tickInterval;
-        _gameWorld.frameDuration = _gameWorld.worldTime.tickInterval;
+        _gameWorld.WorldTime.tick++;
+        _gameWorld.WorldTime.tickDuration = _gameWorld.WorldTime.tickInterval;
+        _gameWorld.frameDuration = _gameWorld.WorldTime.tickInterval;
 
         // This call backs into ProcessCommand
-        _networkServer.HandleClientCommands(_gameWorld.worldTime.tick, this);
-
-        GameTime gameTime = new GameTime(_gameWorld.worldTime.tickRate);
-        gameTime.SetTime(_gameWorld.worldTime.tick, _gameWorld.worldTime.tickInterval);
+        _networkServer.HandleClientCommands(_gameWorld.WorldTime.tick, this);
 
         // Handle spawn requests. All creation of game entities should happen in this phase        
         m_CharacterModule.HandleSpawnRequests();
@@ -213,6 +210,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         }
     }
 
+    Dictionary<int, int> m_TickStats = new Dictionary<int, int>();
     private void UpdateActiveState() {
         int tickCount = 0;
         while (Game.frameTime > m_nextTickTime) {
@@ -249,19 +247,19 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
             //
             // Show some stats about how many world ticks per unity update we have been running
             //
-            //if (debugServerTickStats.IntValue > 0) {
-            //    if (Time.frameCount % 10 == 0)
-            //        GameDebug.Log(remainTime + ":" + rate);
+            if (debugServerTickStats.IntValue > 0) {
+                if (Time.frameCount % 10 == 0)
+                    GameDebug.Log(remainTime + ":" + rate);
 
-            //    if (!m_TickStats.ContainsKey(tickCount))
-            //        m_TickStats[tickCount] = 0;
-            //    m_TickStats[tickCount] = m_TickStats[tickCount] + 1;
-            //    if (Time.frameCount % 100 == 0) {
-            //        foreach (var p in m_TickStats) {
-            //            GameDebug.Log(p.Key + ":" + p.Value);
-            //        }
-            //    }
-            //}
+                if (!m_TickStats.ContainsKey(tickCount))
+                    m_TickStats[tickCount] = 0;
+                m_TickStats[tickCount] = m_TickStats[tickCount] + 1;
+                if (Time.frameCount % 100 == 0) {
+                    foreach (var p in m_TickStats) {
+                        GameDebug.Log(p.Key + ":" + p.Value);
+                    }
+                }
+            }
         }
     }
 
@@ -383,5 +381,8 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     int m_SimStartTimeTick;
     private bool m_performLateUpdate;
     private float m_LastSimTime;
+
+    [ConfigVar(Name = "debug.servertickstats", DefaultValue = "0", Description = "Show stats about how many ticks we run per Unity update (headless only)")]
+    static ConfigVar debugServerTickStats;
 }
 

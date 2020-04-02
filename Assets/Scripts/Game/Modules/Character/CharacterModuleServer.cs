@@ -158,7 +158,7 @@ public class HandleCharacterDespawnRequests : BaseComponentSystem
                     .GetComponentObject<Character>(request.characterEntity);
                 GameDebug.Assert(character != null, "Character despawn request entity is not a character");
 
-                GameDebug.Log("Despawning character:" + character.name + " tick:" + m_world.worldTime.tick);
+                GameDebug.Log("Despawning character:" + character.name + " tick:" + m_world.WorldTime.tick);
 
                 m_world.RequestDespawn(character.gameObject, PostUpdateCommands);
 
