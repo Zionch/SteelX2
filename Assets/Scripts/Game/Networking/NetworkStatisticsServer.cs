@@ -40,7 +40,7 @@ internal class NetworkStatisticsServer
         int byteOutCount = 0;
         foreach (var c in m_NetworkServer.GetConnections()) {
             var client = c.Value;
-            Console.Write(string.Format("   {0:00} {1,5} {2,5} {3,5} {4,5} {5,5} {6:00.00} {7,5} {8:00.00} {9,5}",
+            Console.Write(string.Format("   {0:00} {1,5} {2,5} {3,5} {4,5} {5,5} {6:00.00}  {7,5}  {8:00.00} {9,5}",
                 client.ConnectionId, client.rtt, client.inSequence, client.inSequenceTime, client.outSequence, client.outSequenceAck,
                 (client.counters.avgPackagesIn.graph.average * Game.serverTickRate.FloatValue),
                 (int)(client.counters.avgBytesIn.graph.average * Game.serverTickRate.FloatValue),

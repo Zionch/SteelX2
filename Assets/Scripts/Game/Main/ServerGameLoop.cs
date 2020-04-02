@@ -26,6 +26,8 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         m_ReplicatedEntityModule = new ReplicatedEntityModuleServer(_gameWorld, resourceSystem, networkServer);
         m_ReplicatedEntityModule.ReserveSceneEntities(networkServer);
 
+        movableSystemServer = new MovableSystemServer(_gameWorld, resourceSystem);
+
         m_GameModeSystem = _gameWorld.GetECSWorld().CreateSystem<GameModeSystemServer>(_gameWorld);
     }
 
@@ -83,6 +85,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 
         // Start movement of scene objects. Scene objects that player movement
         // depends on should finish movement in this phase
+        movableSystemServer.Update();
 
         // Update movement of player controlled units 
 
@@ -115,6 +118,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         m_PlayerModule.Shutdown();
 
         m_ReplicatedEntityModule.Shutdown();
+        movableSystemServer.Shutdown();
     }
 
     public void GenerateEntitySnapshot(int entityId, ref NetworkWriter writer) {
@@ -137,6 +141,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     readonly PlayerModuleServer m_PlayerModule;
     readonly CharacterModuleServer m_CharacterModule;
     readonly ReplicatedEntityModuleServer m_ReplicatedEntityModule;
+    readonly MovableSystemServer movableSystemServer;
 }
 
 public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
@@ -181,13 +186,12 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     }
 
     private void EnterLoadingState() {
-
+        Game.Instance.levelManager.LoadLevel("testscene");
     }
 
     private void UpdateLoadingState() {
-        //todo : wait map ready
-
-        _stateMachine.SwitchTo(ServerState.Active);
+        if (Game.Instance.levelManager.IsCurrentLevelLoaded())
+            _stateMachine.SwitchTo(ServerState.Active);
     }
 
     private void EnterActiveState() {
@@ -310,7 +314,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     public void Shutdown() {
         _networkServer.Shutdown();
         _serverGameWorld.Shutdown();
-
+        Game.Instance.levelManager.UnloadLevel();
         _gameWorld.Shutdown();
         _gameWorld = null;
     }

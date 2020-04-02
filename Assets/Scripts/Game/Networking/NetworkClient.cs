@@ -225,7 +225,7 @@ public class NetworkClient
             }
         }
 
-        byte[] packageBuffer = new byte[1024];
+        byte[] packageBuffer = new byte[NetworkConfig.MaxPackageSize];
         public void ReadPackage(byte[] packageData, ISnapshotConsumer snapshotConsumer, INetworkCallbacks networkClientConsumer) {
             counters.bytesIn += packageData.Length;
 
@@ -597,7 +597,6 @@ public class NetworkClient
             spawns.Clear();
 
             foreach (var id in updates) {
-                GameDebug.Log("update id : " + id);
                 var info = entities[id];
                 GameDebug.Assert(info.type != null, "Processing update of id {0} but type is null", id);
                 fixed (uint* data = info.lastUpdate) {

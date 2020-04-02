@@ -150,6 +150,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c2e11dd515d6484dbd76b8167608721, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  movableBoxPrototype:
+    val0: -1370606622
+    val1: 1150568031
+    val2: 161333049
+    val3: 949819249
 --- !u!4 &419643404
 Transform:
   m_ObjectHideFlags: 0

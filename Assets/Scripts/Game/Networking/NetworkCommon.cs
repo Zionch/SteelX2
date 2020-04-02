@@ -63,7 +63,7 @@ public static class NetworkConfig
 
     // Number of serialized snapshots kept on server. Each server tick generate a snapshot. 
     public const int snapshotDeltaCacheSize = 128;  // Number of snapshots to cache for deltas
-
+    public const int MaxPackageSize = 1024;
     // Size of client ack buffers. These buffers are used to keep track of ack'ed baselines
     // from clients. Theoretically the 'right' size is snapshotDeltaCacheSize / (server.tickrate / client.updaterate)
     // e.g. 128 / (60 / 20) = 128 / 3, but since client.updaterate <= server.tickrate we use

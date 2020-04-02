@@ -14,6 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   entries:
   - guid:
+      val0: -1370606622
+      val1: 1150568031
+      val2: 161333049
+      val3: 949819249
+    prefab:
+      val0: -1370606622
+      val1: 1150568031
+      val2: 161333049
+      val3: 949819249
+    factory: {fileID: 0}
+  - guid:
       val0: -1415895362
       val1: 821302306
       val2: 1746847130

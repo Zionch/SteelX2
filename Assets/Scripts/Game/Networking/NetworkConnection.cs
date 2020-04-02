@@ -78,7 +78,6 @@ public class NetworkConnection<TPackageInfo, TCounters> where TPackageInfo : Pac
 
     public int ProcessPackageHeader(byte[] packageData, out NetworkMessage content, out int headerSize) {
         counters.packagesIn++;
-        counters.bytesIn += packageData.Length;
 
         var input = new BitInputStream(packageData);
         

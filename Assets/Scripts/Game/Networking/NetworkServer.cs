@@ -486,7 +486,7 @@ unsafe public class NetworkServer
             }
         }
 
-        byte[] packageBuffer = new byte[1024];
+        byte[] packageBuffer = new byte[NetworkConfig.MaxPackageSize];
         public void ReadPackage(byte[] packageData, INetworkCallbacks loop) {
             counters.bytesIn += packageData.Length;
 
