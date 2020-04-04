@@ -46,6 +46,8 @@ public class ClientGameWorld{
         m_ReplicatedEntityModule.Interpolate(m_RenderTime);
 
         // Prediction
+
+        _gameWorld.ProcessDespawns();
     }
 
     public void LateUpdate(float delta) {

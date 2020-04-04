@@ -82,9 +82,9 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
         foreach (var id in despawns) {
             var entity = m_entityCollection.Unregister(m_world.GetEntityManager(), id);
 
-            if (m_world.GetEntityManager().HasComponent<ReplicatedEntity>(entity)) {
-                var replicatedEntity = m_world.GetEntityManager().GetComponentObject<ReplicatedEntity>(entity);
-                m_world.RequestDespawn(replicatedEntity.gameObject);
+            if (m_world.GetEntityManager().HasComponent<Transform>(entity)) {
+                var transform = m_world.GetEntityManager().GetComponentObject<Transform>(entity);
+                m_world.RequestDespawn(transform.gameObject);
                 continue;
             }
 
