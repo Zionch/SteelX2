@@ -458,7 +458,7 @@ unsafe public class NetworkServer
             // Check for time jumps backward in the command stream and reset the queue in case
             // we find one. (This will happen if the client determines that it has gotten too
             // far ahead and recalculate the client time.)
-
+            
             // TODO : We should be able to do this in a smarter way
             for (var sequence = commandSequenceProcessed + 1; sequence <= commandSequenceIn; ++sequence) {
                 CommandInfo previous;
@@ -502,6 +502,9 @@ unsafe public class NetworkServer
             //if ((content & NetworkMessage.ClientConfig) != 0)
             //    ReadClientConfig(ref input);
 
+            if ((content & NetworkMessage.Commands) != 0)
+                ReadCommands(ref input);
+
             if ((content & NetworkMessage.Events) != 0)
                 ReadEvents(ref input, loop);
         }
@@ -509,6 +512,33 @@ unsafe public class NetworkServer
         //public void ReadClientConfig(ref BitInputStream inpuf) {
 
         //}
+
+        void ReadCommands(ref RawInputStream input){
+            counters.commandsIn++;
+            var schema = input.ReadRawBits(1) != 0;
+            if (schema) {
+                commandSchema = NetworkSchema.ReadSchema(ref input);    // might be overridden
+            }
+
+            // NETTODO Reconstruct the wide sequence
+            // NETTODO Rename to commandMessageSequence?
+            var sequence = Sequence.FromUInt16((ushort)input.ReadRawBits(16), commandSequenceIn);
+            if (sequence > commandSequenceIn)
+                commandSequenceIn = sequence;
+            
+            CommandInfo previous = defaultCommandInfo;
+            while (input.ReadRawBits(1) != 0) {
+                var command = commandsIn.Acquire(sequence);
+                command.time = (int)input.ReadPackedIntDelta(previous.time, NetworkConfig.commandTimeContext);
+
+                uint hash = 0;
+                DeltaReader.Read(ref input, commandSchema, command.data, previous.data, zeroFieldsChanged, 0, ref hash);
+
+                previous = command;
+                --sequence;
+            }
+        }
+        byte[] zeroFieldsChanged = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
 
         public void SendPackage() {
             var rawOutputStream = new BitOutputStream(m_PackageBuffer);
@@ -924,6 +954,7 @@ unsafe public class NetworkServer
         private int snapshotPackageBaseline;
         private int snapshotServerLastWritten;
 
+        CommandInfo defaultCommandInfo = new CommandInfo();
         int commandSequenceIn;
         int commandSequenceProcessed;
         NetworkSchema commandSchema;

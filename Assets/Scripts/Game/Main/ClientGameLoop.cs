@@ -19,9 +19,9 @@ public class ClientGameWorld{
         _networkClient = networkClient;
         this._networkStatistics = _networkStatistics;
 
+        m_CharacterModule = new CharacterModuleClient(_gameWorld, resourceSystem);
         m_PlayerModule = new PlayerModuleClient(_gameWorld);
         m_ReplicatedEntityModule = new ReplicatedEntityModuleClient(_gameWorld, resourceSystem);
-
     }
 
     // This is called at the actual client frame rate, so may be faster or slower than tickrate.
@@ -39,6 +39,7 @@ public class ClientGameWorld{
         // Handle spawn requests
 
         // Handle spawning  
+        m_CharacterModule.HandleSpawns();
         m_PlayerModule.HandleSpawn();
 
         // Update movement of scene objects. Projectiles and grenades can also start update as they use collision data from last frame
@@ -47,11 +48,13 @@ public class ClientGameWorld{
 
         // Prediction
 
+        //Handle despawns
+        m_CharacterModule.HandleDespawns();
         _gameWorld.ProcessDespawns();
     }
 
     public void LateUpdate(float delta) {
-
+        m_CharacterModule.LateUpdate();
     }
 
     private void HandleTime(float frameDuration) {
@@ -150,6 +153,7 @@ public class ClientGameWorld{
     }
 
     public void Shutdown() {
+        m_CharacterModule.Shutdown();
         m_ReplicatedEntityModule.Shutdown();
         m_PlayerModule.Shutdown();
     }
@@ -170,6 +174,7 @@ public class ClientGameWorld{
     LocalPlayer m_localPlayer;
     readonly ReplicatedEntityModuleClient m_ReplicatedEntityModule;
     readonly PlayerModuleClient m_PlayerModule;
+    readonly CharacterModuleClient m_CharacterModule;
 }
 
 public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks

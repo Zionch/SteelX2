@@ -623,6 +623,11 @@ public class NetworkClient
             var output = default(RawOutputStream);
             output.Initialize(m_PackageBuffer, endOfHeaderPos);
 
+            if (commandSequence > 0) {
+                lastSentCommandSeq = commandSequence;
+                WriteCommands(info, ref output);
+            }
+
             WriteEvents(info, ref output);
             int compressedSize = output.Flush();
             rawOutputStream.SkipBytes(compressedSize);
@@ -644,6 +649,39 @@ public class NetworkClient
                 writer.Flush();
             }
         }
+
+        unsafe void WriteCommands(ClientPackageInfo packageInfo, ref RawOutputStream output){
+            AddMessageContentFlag(NetworkMessage.Commands);
+            counters.commandsOut++;
+
+            var includeSchema = commandSequenceAck == 0;
+            output.WriteRawBits(includeSchema ? 1U : 0, 1);
+            if (includeSchema)
+                NetworkSchema.WriteSchema(commandSchema, ref output);
+
+            var sequence = commandSequence;
+            output.WriteRawBits(Sequence.ToUInt16(commandSequence), 16);
+
+            packageInfo.commandSequence = commandSequence;
+            packageInfo.commandTime = commandsOut[commandSequence].time;
+
+            CommandInfo previous = defaultCommandInfo;
+            CommandInfo command;
+            while (commandsOut.TryGetValue(sequence, out command)) {
+                // 1 bit to tell there is a command 
+                output.WriteRawBits(1, 1);
+                output.WritePackedIntDelta(command.time, previous.time, NetworkConfig.commandTimeContext);
+                uint hash = 0;
+                fixed (uint* data = command.data, baseline = previous.data) {
+                    DeltaWriter.Write(ref output, commandSchema, data, baseline, zeroFieldsChanged, 0, ref hash);
+                }
+
+                previous = command;
+                --sequence;
+            }
+            output.WriteRawBits(0, 1);
+        }
+        byte[] zeroFieldsChanged = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
 
         protected override void NotifyDelivered(int sequence, ClientPackageInfo info, bool madeIt) {
             base.NotifyDelivered(sequence, info, madeIt);
@@ -689,6 +727,7 @@ public class NetworkClient
         int commandSequenceAck;
         NetworkSchema commandSchema;
         SequenceBuffer<CommandInfo> commandsOut = new SequenceBuffer<CommandInfo>(3, () => new CommandInfo());
+        CommandInfo defaultCommandInfo = new CommandInfo();
 
         public int serverTickRate;
         public int serverTime;

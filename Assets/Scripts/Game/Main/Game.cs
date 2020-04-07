@@ -207,6 +207,8 @@ public class Game : MonoBehaviour
         }
 
         Console.ConsoleUpdate();
+
+        WindowFocusUpdate();
     }
 
     private void FixedUpdate() {
@@ -326,8 +328,41 @@ public class Game : MonoBehaviour
     }
     //=======================================================
 
+    public static void RequestMousePointerLock() {
+        s_bMouseLockFrameNo = Time.frameCount + 1;
+    }
+
+    public static void SetMousePointerLock(bool locked) {
+        Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !locked;
+        s_bMouseLockFrameNo = Time.frameCount; // prevent default handling in WindowFocusUpdate overriding requests
+    }
+
     public static bool GetMousePointerLock() {
         return Cursor.lockState == CursorLockMode.Locked;
+    }
+
+    void WindowFocusUpdate() {
+        bool lockWhenClicked = !Console.IsOpen();
+
+        if (s_bMouseLockFrameNo == Time.frameCount) {
+            SetMousePointerLock(true);
+            return;
+        }
+
+        if (lockWhenClicked) {
+            // Default behaviour when no menus or anything. Catch mouse on click, release on escape.
+            if (UnityEngine.Input.GetMouseButtonUp(0) && !GetMousePointerLock())
+                SetMousePointerLock(true);
+
+            if (UnityEngine.Input.GetKeyUp(KeyCode.Escape) && GetMousePointerLock())
+                SetMousePointerLock(false);
+        } else {
+            // When menu or console open, release lock
+            if (GetMousePointerLock()) {
+                SetMousePointerLock(false);
+            }
+        }
     }
 
     public static bool IsHeadless { get; private set; }
@@ -340,4 +375,6 @@ public class Game : MonoBehaviour
     private List<IGameLoop> _gameLoops = new List<IGameLoop>();
     private List<System.Type> _requestedGameLoopTypes = new List<System.Type>();
     private List<string[]> _requestedGameLoopArgs = new List<string[]>();
+
+    static int s_bMouseLockFrameNo;
 }

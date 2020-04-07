@@ -47,28 +47,31 @@ public class GameModeSystemServer : ComponentSystem
     protected override void OnCreate() {
         base.OnCreate();
 
-        m_PlayersComponentGroup = GetEntityQuery(typeof(PlayerState));
+        m_PlayersComponentGroup = GetEntityQuery(typeof(PlayerState), typeof(PlayerCharacterControl));
     }
 
     protected override void OnUpdate() {
         var playerStates = m_PlayersComponentGroup.ToComponentArray<PlayerState>();
         var playerEntities = m_PlayersComponentGroup.ToEntityArray(Allocator.TempJob);
-        //var playerCharacterControls = m_PlayersComponentGroup.ToComponentArray<PlayerCharacterControl>();
+        var playerCharacterControls = m_PlayersComponentGroup.ToComponentArray<PlayerCharacterControl>();
 
         for (int i = 0, c = playerStates.Length; i < c; ++i) {
             var player = playerStates[i];
             var controlledEntity = player.controlledEntity;
             var playerEntity = playerEntities[i];
+            var charControl = playerCharacterControls[i];
 
             // Spawn contolled entity (character) any missing
             if (controlledEntity == Entity.Null) {
                 var position = new Vector3(0.0f, 0.2f, 0.0f);
                 var rotation = Quaternion.identity;
 
-                CharacterSpawnRequest.Create(PostUpdateCommands, 0, position, rotation, playerEntity);
+                CharacterSpawnRequest.Create(PostUpdateCommands, charControl.MechSettings, position, rotation, playerEntity);
 
                 continue;
             }
+
+            //TODO : handle request mech change
         }
 
         playerEntities.Dispose();

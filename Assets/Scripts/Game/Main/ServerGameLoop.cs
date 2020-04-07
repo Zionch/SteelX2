@@ -61,9 +61,8 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
                     client.player.controlledEntity);
 
                 userCommand.command = client.latestCommand;
-
-                _gameWorld.GetEntityManager().SetComponentData<UserCommandComponentData>(
-                    client.player.controlledEntity, userCommand);
+                
+                _gameWorld.GetEntityManager().SetComponentData(client.player.controlledEntity, userCommand);
             }
         }
     }

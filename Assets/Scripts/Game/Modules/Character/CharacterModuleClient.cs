@@ -58,10 +58,10 @@ class CharacterModuleClient : CharacterModuleShared
         //m_ControlledEntityChangedSystems.Add(m_world.GetECSWorld().CreateManager<PlayerCharacterControlSystem>(m_world));
 
         // Handle spawn
-        //CharacterBehaviours.CreateHandleSpawnSystems(m_world, m_HandleSpawnSystems, resourceSystem, false);
+        CharacterBehaviours.CreateHandleSpawnSystems(m_world, m_HandleSpawnSystems, resourceSystem, false);
 
         // Handle despawn
-        //CharacterBehaviours.CreateHandleDespawnSystems(m_world, m_HandleDespawnSystems);
+        CharacterBehaviours.CreateHandleDespawnSystems(m_world, m_HandleDespawnSystems);
 
         // Behaviors
         //CharacterBehaviours.CreateAbilityRequestSystems(m_world, m_AbilityRequestUpdateSystems);

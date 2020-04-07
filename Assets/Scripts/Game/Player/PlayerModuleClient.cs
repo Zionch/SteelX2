@@ -190,7 +190,7 @@ public class PlayerModuleClient
                 refSerializer = null,
                 tick = tick
             };
-
+            
             localPlayer.networkClient.QueueCommand(tick, (ref NetworkWriter writer) => {
                 command.Serialize(ref serializeContext, ref writer);
             });

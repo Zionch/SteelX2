@@ -6,20 +6,20 @@ using UnityEngine.Profiling;
 
 public struct CharacterSpawnRequest : IComponentData
 {
-    public int characterType;
+    public MechSettings mechSettings;
     public Vector3 position;
     public Quaternion rotation;
     public Entity playerEntity;
 
-    private CharacterSpawnRequest(int characterType, Vector3 position, Quaternion rotation, Entity playerEntity) {
-        this.characterType = characterType;
+    private CharacterSpawnRequest(MechSettings mechSettings, Vector3 position, Quaternion rotation, Entity playerEntity) {
+        this.mechSettings = mechSettings;
         this.position = position;
         this.rotation = rotation;
         this.playerEntity = playerEntity;
     }
 
-    public static void Create(EntityCommandBuffer commandBuffer, int characterType, Vector3 position, Quaternion rotation, Entity playerEntity) {
-        var data = new CharacterSpawnRequest(characterType, position, rotation, playerEntity);
+    public static void Create(EntityCommandBuffer commandBuffer, MechSettings mechSettings, Vector3 position, Quaternion rotation, Entity playerEntity) {
+        var data = new CharacterSpawnRequest(mechSettings, position, rotation, playerEntity);
         commandBuffer.AddComponent(commandBuffer.CreateEntity(), data);
     }
 }
@@ -83,7 +83,7 @@ public class HandleCharacterSpawnRequests : BaseComponentSystem
         for (var i = 0; i < spawnRequests.Length; i++) {
             var request = spawnRequests[i];
             var playerState = EntityManager.GetComponentObject<PlayerState>(request.playerEntity);
-            var character = SpawnCharacter(m_world, playerState, request.position, request.rotation, request.characterType, m_ResourceManager);
+            var character = SpawnCharacter(m_world, playerState, request.position, request.rotation, request.mechSettings, m_ResourceManager);
             playerState.controlledEntity = character.gameObject.GetComponent<GameObjectEntity>().Entity;
         }
 
@@ -92,7 +92,7 @@ public class HandleCharacterSpawnRequests : BaseComponentSystem
     }
 
     public Character SpawnCharacter(GameWorld world, PlayerState owner, Vector3 position, Quaternion rotation,
-        int heroIndex, BundledResourceManager resourceSystem) {
+        MechSettings mechSettings, BundledResourceManager resourceSystem) {
         //var heroTypeRegistry = resourceSystem.GetResourceRegistry<HeroTypeRegistry>();
 
         //heroIndex = Mathf.Min(heroIndex, heroTypeRegistry.entries.Count);
@@ -105,8 +105,8 @@ public class HandleCharacterSpawnRequests : BaseComponentSystem
         //character.teamId = 0;
         character.TeleportTo(position, rotation);
 
-        //var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(charEntity);
-        //charRepAll.heroTypeIndex = heroIndex;
+        var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(charEntity);
+        charRepAll.MechSettings = mechSettings;
 
         //charRepAll.abilityCollection = heroTypeAsset.abilities.Create(EntityManager, resourceSystem, m_world);
 
@@ -162,8 +162,8 @@ public class HandleCharacterDespawnRequests : BaseComponentSystem
 
                 m_world.RequestDespawn(character.gameObject, PostUpdateCommands);
 
-                //var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(request.characterEntity);
-                //m_world.RequestDespawn(PostUpdateCommands, charRepAll.abilityCollection);
+                var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(request.characterEntity);
+                m_world.RequestDespawn(PostUpdateCommands, charRepAll.abilityCollection);
 
                 PostUpdateCommands.DestroyEntity(requestEntityArray[i]);
             }
@@ -274,10 +274,10 @@ public class CharacterModuleServer : CharacterModuleShared
         //m_ControlledEntityChangedSystems.Add(m_world.GetECSWorld().CreateManager<PlayerCharacterControlSystem>(m_world));
 
         // Handle spawn
-        //CharacterBehaviours.CreateHandleSpawnSystems(m_world, m_HandleSpawnSystems, resourceSystem, true);
+        CharacterBehaviours.CreateHandleSpawnSystems(m_world, m_HandleSpawnSystems, resourceSystem, true);
 
         // Handle despawn
-        //CharacterBehaviours.CreateHandleDespawnSystems(m_world, m_HandleDespawnSystems);
+        CharacterBehaviours.CreateHandleDespawnSystems(m_world, m_HandleDespawnSystems);
 
         // Behavior
         //CharacterBehaviours.CreateAbilityRequestSystems(m_world, m_AbilityRequestUpdateSystems);
