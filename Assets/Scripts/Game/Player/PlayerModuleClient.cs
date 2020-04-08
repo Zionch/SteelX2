@@ -24,14 +24,14 @@ public class PlayerModuleClient
         //m_HandlePlayerCameraControlSpawn = m_world.GetECSWorld().CreateManager<HandlePlayerCameraControlSpawn>(m_world);
         //m_UpdatePlayerCameras = m_world.GetECSWorld().CreateManager<UpdatePlayerCameras>(m_world);
         m_ResolvePlayerReference = m_world.GetECSWorld().CreateSystem<ResolvePlayerReference>(m_world);
-        //m_UpdateServerEntityComponent = m_world.GetECSWorld().CreateManager<UpdateServerEntityComponent>(m_world);
+        m_UpdateServerEntityComponent = m_world.GetECSWorld().CreateSystem<UpdateServerEntityComponent>(m_world);
     }
 
     public void Shutdown() {
         //m_world.GetECSWorld().DestroyManager(m_HandlePlayerCameraControlSpawn);
         //m_world.GetECSWorld().DestroyManager(m_UpdatePlayerCameras);
         m_world.GetECSWorld().DestroySystem(m_ResolvePlayerReference);
-        //m_world.GetECSWorld().DestroyManager(m_UpdateServerEntityComponent);
+        m_world.GetECSWorld().DestroySystem(m_UpdateServerEntityComponent);
 
         if (m_LocalPlayer != null)
             m_world.RequestDespawn(m_LocalPlayer.gameObject);
@@ -123,9 +123,9 @@ public class PlayerModuleClient
             m_ResolvePlayerReference.Update();
     }
 
-    //public void HandleControlledEntityChanged() {
-    //    m_UpdateServerEntityComponent.Update();
-    //}
+    public void HandleControlledEntityChanged() {
+        m_UpdateServerEntityComponent.Update();
+    }
 
     public void StoreCommand(int tick) {
         StoreCommand(m_LocalPlayer, tick);
@@ -212,7 +212,7 @@ public class PlayerModuleClient
     //readonly HandlePlayerCameraControlSpawn m_HandlePlayerCameraControlSpawn;
     //readonly UpdatePlayerCameras m_UpdatePlayerCameras;
     readonly ResolvePlayerReference m_ResolvePlayerReference;
-    //readonly UpdateServerEntityComponent m_UpdateServerEntityComponent;
+    readonly UpdateServerEntityComponent m_UpdateServerEntityComponent;
 
     [ConfigVar(Name = "debugmove", DefaultValue = "0", Description = "Should client perform debug movement")]
     static ConfigVar m_debugMove;

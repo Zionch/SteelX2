@@ -133,10 +133,10 @@ public class HandleCharacterDespawn : DeinitializeComponentSystem<Character>
         //var moveQuery = EntityManager.GetComponentObject<CharacterMoveQuery>(charEntity);
         //moveQuery.Shutdown();
 
-        //// Remove presentations
-        //foreach (var charPresentation in character.presentations) {
-        //    m_world.RequestDespawn(charPresentation.gameObject, PostUpdateCommands);
-        //}
+        // Remove presentations
+        foreach (var charPresentation in character.presentations) {
+            m_world.RequestDespawn(charPresentation.gameObject, PostUpdateCommands);
+        }
     }
 }
 

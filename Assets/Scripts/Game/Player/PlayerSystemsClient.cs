@@ -32,3 +32,20 @@ public class ResolvePlayerReference : BaseComponentSystem
 
     LocalPlayer m_LocalPlayer;
 }
+
+[DisableAutoCreation]
+public class UpdateServerEntityComponent : BaseComponentSystem<LocalPlayer>//update controlled entity
+{
+    public UpdateServerEntityComponent(GameWorld world) : base(world) { }
+
+    protected override void Update(Entity entity, LocalPlayer localPlayer) {
+        if (localPlayer.playerState == null)
+            return;
+
+        var player = localPlayer.playerState;
+
+        if (player.controlledEntity != localPlayer.controlledEntity) {
+            localPlayer.controlledEntity = player.controlledEntity;
+        }
+    }
+}

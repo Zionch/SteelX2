@@ -1,4 +1,7 @@
 ﻿using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class MechPresentationBuilder
 {
@@ -101,8 +104,48 @@ public class MechPresentationBuilder
         partToSwitch.bones = MyBones;
     }
 
-    //private static void LoadBooster(MechSkeleton mechSkeleton, string booster_name) {
-        
+#if UNITY_EDITOR
+    [MenuItem("SteelX/BuildDefaultMech")]
+    public static void BuildDefaultMech() {//only need to call this if skinned mesh renderer not render (due to the bones not map to obj's)
+        if (Application.isPlaying) return;
+
+        var obj = Selection.activeObject;
+        var mechObj = obj as GameObject;
+        if (mechObj == null) {
+            GameDebug.Log("Not a valid mech");
+            return;
+        } else {
+            var mechSkeleton = mechObj.GetComponentInChildren<MechSkeleton>();
+            var mechPresentation = mechObj.GetComponentInChildren<MechPresentationSetup>();
+
+            // Create new array to store skinned mesh renderers
+            SkinnedMeshRenderer[] newSMR = new SkinnedMeshRenderer[4];
+            var partPrefabs = new Object[5];
+
+            partPrefabs[0] = Resources.Load("Prefabs/DefaultMechParts/d_HDS003");
+            partPrefabs[1] = Resources.Load("Prefabs/DefaultMechParts/d_CES301");
+            partPrefabs[2] = Resources.Load("Prefabs/DefaultMechParts/d_AES104");
+            partPrefabs[3] = Resources.Load("Prefabs/DefaultMechParts/d_LTN411");
+            partPrefabs[4] = Resources.Load("Prefabs/DefaultMechParts/d_PTS000");
+
+            //Extract Skinned Mesh
+            for (int i = 0; i < 4; i++) {
+                newSMR[i] = ((GameObject)partPrefabs[i]).GetComponentInChildren<SkinnedMeshRenderer>();
+            }
+
+            // Replace all
+            SkinnedMeshRenderer[] curSMR = mechPresentation.CurSMRs;
+
+            for (int i = 0; i < 4; i++) {//TODO : remake the order part
+                                         //Note the order of parts in MechFrame.prefab matters
+                if (newSMR[i] == null) { Debug.LogError(i + " is null."); continue; }
+                MapBones(mechSkeleton, newSMR[i], curSMR[i]);
+                curSMR[i].sharedMesh = newSMR[i].sharedMesh;
+                curSMR[i].enabled = true;
+            }
+        }
+    }
+#endif    
 
     //    //switch booster aniamtion clips
     //    //if (newBooster != null && newBooster.GetComponent<Animator>() != null && newBooster.GetComponent<Animator>().runtimeAnimatorController != null) {
