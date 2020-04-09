@@ -28,7 +28,7 @@ unsafe public class NetworkServer
 
     public delegate void DataGenerator(ref NetworkWriter writer);
 
-    [ConfigVar(Name = "server.network_prediction", DefaultValue = "1", Description = "Predict snapshots data to improve compression and minimize bandwidth")]
+    [ConfigVar(Name = "server.network_prediction", DefaultValue = "0", Description = "Predict snapshots data to improve compression and minimize bandwidth")]
     public static ConfigVar network_prediction;
 
     // Each client needs to receive this on connect and when any of the values changes

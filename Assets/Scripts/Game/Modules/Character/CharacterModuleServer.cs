@@ -288,7 +288,7 @@ public class CharacterModuleServer : CharacterModuleShared
         //CharacterBehaviours.CreateAbilityResolveSystems(m_world, m_AbilityResolveSystems);
 
 
-        //m_UpdateCharPresentationState = m_world.GetECSWorld().CreateManager<UpdateCharPresentationState>(m_world);
+        m_UpdateCharPresentationState = m_world.GetECSWorld().CreateSystem<UpdateCharPresentationState>(m_world);
         //m_ApplyPresentationState = m_world.GetECSWorld().CreateManager<ApplyPresentationState>(m_world);
 
 
@@ -302,7 +302,7 @@ public class CharacterModuleServer : CharacterModuleShared
 
         m_world.GetECSWorld().DestroySystem(m_HandleCharacterDespawnRequests);
         m_world.GetECSWorld().DestroySystem(m_HandleCharacterSpawnRequests);
-        //m_world.GetECSWorld().DestroySystem(m_UpdateCharPresentationState);
+        m_world.GetECSWorld().DestroySystem(m_UpdateCharPresentationState);
 
         //m_world.GetECSWorld().DestroySystem(m_HandleDamage);
         //m_world.GetECSWorld().DestroySystem(m_UpdatePresentationRootTransform);
@@ -319,10 +319,10 @@ public class CharacterModuleServer : CharacterModuleShared
     //    m_HandleDamage.Update();
     //}
 
-    //public void PresentationUpdate() {
-    //    m_UpdateCharPresentationState.Update();
-    //    m_ApplyPresentationState.Update();
-    //}
+    public void PresentationUpdate() {
+        m_UpdateCharPresentationState.Update();
+        //m_ApplyPresentationState.Update();
+    }
 
     //public void AttachmentUpdate() {
     //    m_UpdatePresentationRootTransform.Update();
@@ -340,7 +340,7 @@ public class CharacterModuleServer : CharacterModuleShared
     readonly HandleCharacterSpawnRequests m_HandleCharacterSpawnRequests;
     readonly HandleCharacterDespawnRequests m_HandleCharacterDespawnRequests;
 
-    //readonly UpdateCharPresentationState m_UpdateCharPresentationState;
+    readonly UpdateCharPresentationState m_UpdateCharPresentationState;
     //readonly ApplyPresentationState m_ApplyPresentationState;
 
     //readonly HandleDamage m_HandleDamage;

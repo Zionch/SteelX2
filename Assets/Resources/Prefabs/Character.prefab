@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: 1231257906450546089}
   - component: {fileID: 3127962712601630217}
   - component: {fileID: -8148346818259099150}
+  - component: {fileID: 2969896554934386469}
+  - component: {fileID: -6047677048624956607}
   m_Layer: 0
   m_Name: Character
   m_TagString: Untagged
@@ -77,7 +79,7 @@ MonoBehaviour:
       val1: 821302306
       val2: 1746847130
       val3: 1290797049
-  netID: f92f5f7dab8ebc4aa7c893e944b76a00
+  netID: 1ed60fb544587c4b8f3a913788b18c31
 --- !u!114 &3127962712601630217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -102,3 +104,73 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3270472cd3314af44b0e6ca77a19014f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2969896554934386469
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2336937637921779019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21cf4856f00041a4d8244272ee7f4305, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SerializedData:
+    tick: 0
+    position: {x: 0, y: 0, z: 0}
+    velocity: {x: 0, y: 0, z: 0}
+    locoState: 0
+    locoStartTick: 0
+    action: 0
+    actionStartTick: 0
+    jumpCount: 0
+    sprinting: 0
+    cameraProfile: 0
+    damageTick: 0
+    damageDirection: {x: 0, y: 0, z: 0}
+    damageImpulse: 0
+--- !u!114 &-6047677048624956607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2336937637921779019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0022c6c4b4c5c7478aa667b151668e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SerializedData:
+    position: {x: 0, y: 0, z: 0}
+    rotation: 0
+    aimYaw: 0
+    aimPitch: 0
+    moveYaw: 0
+    charLocoState: 0
+    charLocoTick: 0
+    charAction: 0
+    charActionTick: 0
+    damageTick: 0
+    damageDirection: 0
+    sprinting: 0
+    sprintWeight: 0
+    previousCharLocoState: 0
+    lastGroundMoveTick: 0
+    moveAngleLocal: 0
+    shootPoseWeight: 0
+    locomotionVector: {x: 0, y: 0}
+    locomotionPhase: 0
+    banking: 0
+    landAnticWeight: 0
+    turnStartAngle: 0
+    turnDirection: 0
+    squashTime: 0
+    squashWeight: 0
+    inAirTime: 0
+    jumpTime: 0
+    simpleTime: 0
+    footIkOffset: {x: 0, y: 0}
+    footIkNormalLeft: {x: 0, y: 0, z: 0}
+    footIkNormaRight: {x: 0, y: 0, z: 0}

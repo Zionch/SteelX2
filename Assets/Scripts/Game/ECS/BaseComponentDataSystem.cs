@@ -358,11 +358,13 @@ public abstract class BaseComponentDataSystem<T1, T2, T3, T4, T5> : BaseComponen
     protected abstract void Update(Entity entity, T1 data1, T2 data2, T3 data3, T4 data4, T5 data5);
 }
 
+public struct SystemState : IComponentData { }
+
 [AlwaysUpdateSystem]
 public abstract class InitializeComponentSystem<T> : BaseComponentSystem
     where T : MonoBehaviour
 {
-    struct SystemState : IComponentData { }
+    
     EntityQuery IncomingGroup;
     string name;
 

@@ -82,6 +82,7 @@ public class Game : MonoBehaviour
 
     public static InputSystem inputSystem;
     public LevelManager levelManager;
+    public Camera bootCamera;
 
     public static class Input
     {
@@ -160,6 +161,8 @@ public class Game : MonoBehaviour
         levelManager = new LevelManager();
         levelManager.Init();
         inputSystem = new InputSystem();
+
+        PushCamera(bootCamera);
     }
 
     private void Update()
@@ -191,6 +194,11 @@ public class Game : MonoBehaviour
 
             _requestedGameLoopArgs.Clear();
             _requestedGameLoopTypes.Clear();
+        }
+
+        // Verify if camera was somehow destroyed and pop it
+        if (m_CameraStack.Count > 1 && m_CameraStack[m_CameraStack.Count - 1] == null) {
+            PopCamera(null);
         }
 
         frameTime = (double)Clock.ElapsedTicks / m_StopwatchFrequency;
@@ -295,6 +303,41 @@ public class Game : MonoBehaviour
         Console.Shutdown();
     }
 
+    public Camera TopCamera() {
+        var c = m_CameraStack.Count;
+        return c == 0 ? null : m_CameraStack[c - 1];
+    }
+
+    public void PushCamera(Camera cam) {
+        if (m_CameraStack.Count > 0)
+            SetCameraEnabled(m_CameraStack[m_CameraStack.Count - 1], false);
+        m_CameraStack.Add(cam);
+        SetCameraEnabled(cam, true);
+        //m_ExposureReleaseCount = 10;
+    }
+
+    public void PopCamera(Camera cam) {
+        GameDebug.Assert(m_CameraStack.Count > 1, "Trying to pop last camera off stack!");
+        GameDebug.Assert(cam == m_CameraStack[m_CameraStack.Count - 1]);
+        if (cam != null)
+            SetCameraEnabled(cam, false);
+        m_CameraStack.RemoveAt(m_CameraStack.Count - 1);
+        SetCameraEnabled(m_CameraStack[m_CameraStack.Count - 1], true);
+    }
+
+    void SetCameraEnabled(Camera cam, bool enabled) {
+        //if (enabled)
+        //    RenderSettings.UpdateCameraSettings(cam);
+
+        cam.enabled = enabled;
+        var audioListener = cam.GetComponent<AudioListener>();
+        if (audioListener != null) {
+            audioListener.enabled = enabled;
+            //if (SoundSystem != null)
+            //    SoundSystem.SetCurrentListener(enabled ? audioListener : null);
+        }
+    }
+
     //Commands
     //=======================================================
     private void RegisterConsoleCommands() {
@@ -371,6 +414,9 @@ public class Game : MonoBehaviour
     public static int GameLoopCount {
         get { return Instance == null ? 0 : 1; }
     }
+
+    // Global camera handling
+    List<Camera> m_CameraStack = new List<Camera>();
 
     private List<IGameLoop> _gameLoops = new List<IGameLoop>();
     private List<System.Type> _requestedGameLoopTypes = new List<System.Type>();

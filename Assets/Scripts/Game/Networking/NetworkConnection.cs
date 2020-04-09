@@ -287,7 +287,7 @@ public class NetworkConnection<TPackageInfo, TCounters> where TPackageInfo : Pac
         info.events.Clear();
     }
 
-    public byte[] m_PackageBuffer = new byte[1024 * 64];    //TODO: fix this
+    public byte[] m_PackageBuffer = new byte[NetworkConfig.MaxPackageSize];
 
     List<NetworkEventType> ackedEventTypes = new List<NetworkEventType>();
     Dictionary<ushort, NetworkEventType> eventTypesIn = new Dictionary<ushort, NetworkEventType>();

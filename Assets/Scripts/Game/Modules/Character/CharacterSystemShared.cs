@@ -164,87 +164,91 @@ public class HandleCharacterDespawn : DeinitializeComponentSystem<Character>
 //    }
 //}
 
-//[DisableAutoCreation]
-//public class UpdateCharPresentationState : BaseComponentSystem
-//{
-//    ComponentGroup Group;
-//    const float k_StopMovePenalty = 0.075f;
+[DisableAutoCreation]
+public class UpdateCharPresentationState : BaseComponentSystem
+{
+    EntityQuery Group;
+    const float k_StopMovePenalty = 0.075f;
 
-//    public UpdateCharPresentationState(GameWorld gameWorld) : base(gameWorld) { }
+    public UpdateCharPresentationState(GameWorld gameWorld) : base(gameWorld) { }
 
-//    protected override void OnCreateManager() {
-//        base.OnCreateManager();
-//        Group = GetComponentGroup(typeof(ServerEntity), typeof(Character), typeof(CharacterPredictedData), typeof(CharacterInterpolatedData),
-//            typeof(UserCommandComponentData));
-//    }
-
-
-//    protected override void OnUpdate() {
-//        Profiler.BeginSample("CharacterSystemShared.UpdatePresentationState");
-
-//        var entityArray = Group.GetEntityArray();
-//        var characterArray = Group.GetComponentArray<Character>();
-//        var charPredictedStateArray = Group.GetComponentDataArray<CharacterPredictedData>();
-//        var charAnimStateArray = Group.GetComponentDataArray<CharacterInterpolatedData>();
-//        var userCommandArray = Group.GetComponentDataArray<UserCommandComponentData>();
-
-//        var deltaTime = m_world.frameDuration;
-//        for (var i = 0; i < charPredictedStateArray.Length; i++) {
-//            var entity = entityArray[i];
-//            var character = characterArray[i];
-//            var charPredictedState = charPredictedStateArray[i];
-//            var animState = charAnimStateArray[i];
-//            var userCommand = userCommandArray[i].command;
-
-//            // TODO: Move this into the network
-//            animState.position = charPredictedState.position;
-//            animState.charLocoTick = charPredictedState.locoStartTick;
-//            animState.sprinting = charPredictedState.sprinting;
-//            animState.charAction = charPredictedState.action;
-//            animState.charActionTick = charPredictedState.actionStartTick;
-//            animState.aimYaw = userCommand.lookYaw;
-//            animState.aimPitch = userCommand.lookPitch;
-//            animState.previousCharLocoState = animState.charLocoState;
-
-//            // Add small buffer between GroundMove and Stand, to reduce animation noise when there are gaps in between
-//            // input keypresses
-//            if (charPredictedState.locoState == CharacterPredictedData.LocoState.Stand
-//                && animState.charLocoState == CharacterPredictedData.LocoState.GroundMove
-//                && m_world.worldTime.DurationSinceTick(animState.lastGroundMoveTick) < k_StopMovePenalty) {
-//                animState.charLocoState = CharacterPredictedData.LocoState.GroundMove;
-//            } else {
-//                animState.charLocoState = charPredictedState.locoState;
-//            }
-
-//            var groundMoveVec = Vector3.ProjectOnPlane(charPredictedState.velocity, Vector3.up);
-//            animState.moveYaw = Vector3.Angle(Vector3.forward, groundMoveVec);
-//            var cross = Vector3.Cross(Vector3.forward, groundMoveVec);
-//            if (cross.y < 0)
-//                animState.moveYaw = 360 - animState.moveYaw;
-
-//            animState.damageTick = charPredictedState.damageTick;
-//            var damageDirOnPlane = Vector3.ProjectOnPlane(charPredictedState.damageDirection, Vector3.up);
-//            animState.damageDirection = Vector3.SignedAngle(Vector3.forward, damageDirOnPlane, Vector3.up);
+    protected override void OnCreate() {
+        base.OnCreate();
+        Group = GetEntityQuery(typeof(ServerEntity), typeof(Character), typeof(CharacterPredictedData), typeof(CharacterInterpolatedData),
+            typeof(UserCommandComponentData));
+    }
 
 
-//            // Set anim state before anim state ctrl is running 
-//            EntityManager.SetComponentData(entity, animState);
+    protected override void OnUpdate() {
+        Profiler.BeginSample("CharacterSystemShared.UpdatePresentationState");
 
-//            // TODO (mogensh) perhaps we should not call presentation, but make system that updates presentation (and reads anim state) 
-//            // Update presentationstate animstatecontroller
-//            var animStateCtrl = EntityManager.GetComponentObject<AnimStateController>(character.presentation);
-//            animStateCtrl.UpdatePresentationState(m_world.worldTime, deltaTime);
+        var entityArray = Group.ToEntityArray(Allocator.TempJob);
+        var characterArray = Group.ToComponentArray<Character>();
+        var charPredictedStateArray = Group.ToComponentDataArray<CharacterPredictedData>(Allocator.TempJob);
+        var charAnimStateArray = Group.ToComponentDataArray<CharacterInterpolatedData>(Allocator.TempJob);
+        var userCommandArray = Group.ToComponentDataArray<UserCommandComponentData>(Allocator.TempJob);
 
-//            if (charPredictedState.locoState == CharacterPredictedData.LocoState.GroundMove) {
-//                animState = EntityManager.GetComponentData<CharacterInterpolatedData>(entity);
-//                animState.lastGroundMoveTick = m_world.worldTime.tick;
-//                EntityManager.SetComponentData(entity, animState);
-//            }
-//        }
+        var deltaTime = m_world.frameDuration;
+        for (var i = 0; i < charPredictedStateArray.Length; i++) {
+            var entity = entityArray[i];
+            var character = characterArray[i];
+            var charPredictedState = charPredictedStateArray[i];
+            var animState = charAnimStateArray[i];
+            var userCommand = userCommandArray[i].command;
 
-//        Profiler.EndSample();
-//    }
-//}
+            // TODO: Move this into the network
+            animState.position = charPredictedState.position;
+            animState.charLocoTick = charPredictedState.locoStartTick;
+            animState.sprinting = charPredictedState.sprinting;
+            animState.charAction = charPredictedState.action;
+            animState.charActionTick = charPredictedState.actionStartTick;
+            animState.aimYaw = userCommand.lookYaw;
+            animState.aimPitch = userCommand.lookPitch;
+            animState.previousCharLocoState = animState.charLocoState;
+
+            // Add small buffer between GroundMove and Stand, to reduce animation noise when there are gaps in between
+            // input keypresses
+            if (charPredictedState.locoState == CharacterPredictedData.LocoState.Stand
+                && animState.charLocoState == CharacterPredictedData.LocoState.GroundMove
+                && m_world.WorldTime.DurationSinceTick(animState.lastGroundMoveTick) < k_StopMovePenalty) {
+                animState.charLocoState = CharacterPredictedData.LocoState.GroundMove;
+            } else {
+                animState.charLocoState = charPredictedState.locoState;
+            }
+
+            var groundMoveVec = Vector3.ProjectOnPlane(charPredictedState.velocity, Vector3.up);
+            animState.moveYaw = Vector3.Angle(Vector3.forward, groundMoveVec);
+            var cross = Vector3.Cross(Vector3.forward, groundMoveVec);
+            if (cross.y < 0)
+                animState.moveYaw = 360 - animState.moveYaw;
+
+            animState.damageTick = charPredictedState.damageTick;
+            var damageDirOnPlane = Vector3.ProjectOnPlane(charPredictedState.damageDirection, Vector3.up);
+            animState.damageDirection = Vector3.SignedAngle(Vector3.forward, damageDirOnPlane, Vector3.up);
+
+            // Set anim state before anim state ctrl is running 
+            EntityManager.SetComponentData(entity, animState);
+
+            // TODO perhaps we should not call presentation, but make system that updates presentation (and reads anim state) 
+            // Update presentationstate animstatecontroller
+            //var animStateCtrl = EntityManager.GetComponentObject<AnimStateController>(character.presentation);
+            //animStateCtrl.UpdatePresentationState(m_world.WorldTime, deltaTime);
+
+            if (charPredictedState.locoState == CharacterPredictedData.LocoState.GroundMove) {
+                animState = EntityManager.GetComponentData<CharacterInterpolatedData>(entity);
+                animState.lastGroundMoveTick = m_world.WorldTime.tick;
+                EntityManager.SetComponentData(entity, animState);
+            }
+        }
+
+        entityArray.Dispose();
+        charPredictedStateArray.Dispose();
+        charAnimStateArray.Dispose();
+        userCommandArray.Dispose();
+
+        Profiler.EndSample();
+    }
+}
 
 
 //[DisableAutoCreation]

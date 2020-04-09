@@ -21,15 +21,15 @@ public class PlayerModuleClient
     public PlayerModuleClient(GameWorld world) {
         m_world = world;
 
-        //m_HandlePlayerCameraControlSpawn = m_world.GetECSWorld().CreateManager<HandlePlayerCameraControlSpawn>(m_world);
-        //m_UpdatePlayerCameras = m_world.GetECSWorld().CreateManager<UpdatePlayerCameras>(m_world);
+        m_HandlePlayerCameraControlSpawn = m_world.GetECSWorld().CreateSystem<HandlePlayerCameraControlSpawn>(m_world);
+        m_UpdatePlayerCameras = m_world.GetECSWorld().CreateSystem<UpdatePlayerCameras>(m_world);
         m_ResolvePlayerReference = m_world.GetECSWorld().CreateSystem<ResolvePlayerReference>(m_world);
         m_UpdateServerEntityComponent = m_world.GetECSWorld().CreateSystem<UpdateServerEntityComponent>(m_world);
     }
 
     public void Shutdown() {
-        //m_world.GetECSWorld().DestroyManager(m_HandlePlayerCameraControlSpawn);
-        //m_world.GetECSWorld().DestroyManager(m_UpdatePlayerCameras);
+        m_world.GetECSWorld().DestroySystem(m_HandlePlayerCameraControlSpawn);
+        m_world.GetECSWorld().DestroySystem(m_UpdatePlayerCameras);
         m_world.GetECSWorld().DestroySystem(m_ResolvePlayerReference);
         m_world.GetECSWorld().DestroySystem(m_UpdateServerEntityComponent);
 
@@ -198,19 +198,19 @@ public class PlayerModuleClient
     }
 
     public void HandleSpawn() {
-        //m_HandlePlayerCameraControlSpawn.Update();
+        m_HandlePlayerCameraControlSpawn.Update();
     }
 
     public void CameraUpdate() {
-        //m_UpdatePlayerCameras.Update();
+        m_UpdatePlayerCameras.Update();
     }
 
     readonly GameWorld m_world;
 
     LocalPlayer m_LocalPlayer;
 
-    //readonly HandlePlayerCameraControlSpawn m_HandlePlayerCameraControlSpawn;
-    //readonly UpdatePlayerCameras m_UpdatePlayerCameras;
+    readonly HandlePlayerCameraControlSpawn m_HandlePlayerCameraControlSpawn;
+    readonly UpdatePlayerCameras m_UpdatePlayerCameras;
     readonly ResolvePlayerReference m_ResolvePlayerReference;
     readonly UpdateServerEntityComponent m_UpdateServerEntityComponent;
 

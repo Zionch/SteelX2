@@ -93,7 +93,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 
         // Handle damage
 
-        //m_CharacterModule.PresentationUpdate();
+        m_CharacterModule.PresentationUpdate();
 
         m_GameModeSystem.Update();
 

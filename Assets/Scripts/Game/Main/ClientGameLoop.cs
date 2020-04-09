@@ -46,7 +46,17 @@ public class ClientGameWorld{
 
         m_ReplicatedEntityModule.Interpolate(m_RenderTime);
 
+        // Handle controlled entity changed
+        m_PlayerModule.HandleControlledEntityChanged();
+        //m_CharacterModule.HandleControlledEntityChanged();
+
         // Prediction
+
+        //update presentation
+        _gameWorld.WorldTime = m_PredictedTime;
+        m_CharacterModule.UpdatePresentation();
+
+        _gameWorld.WorldTime = m_RenderTime;
 
         //Handle despawns
         m_CharacterModule.HandleDespawns();
@@ -54,6 +64,9 @@ public class ClientGameWorld{
     }
 
     public void LateUpdate(float delta) {
+        m_CharacterModule.CameraUpdate();
+        m_PlayerModule.CameraUpdate();
+
         m_CharacterModule.LateUpdate();
     }
 

@@ -72,7 +72,7 @@ class CharacterModuleClient : CharacterModuleShared
 
         // Interpolation        
 
-        //m_UpdateCharPresentationState = m_world.GetECSWorld().CreateManager<UpdateCharPresentationState>(m_world);
+        m_UpdateCharPresentationState = m_world.GetECSWorld().CreateSystem<UpdateCharPresentationState>(m_world);
         //m_ApplyPresentationState = m_world.GetECSWorld().CreateManager<ApplyPresentationState>(m_world);
         //m_CharacterLateUpdate = m_world.GetECSWorld().CreateManager<CharacterLateUpdate>(m_world);
 
@@ -80,7 +80,7 @@ class CharacterModuleClient : CharacterModuleShared
         //m_UpdatePresentationAttachmentTransform = m_world.GetECSWorld().CreateManager<UpdatePresentationAttachmentTransform>(m_world);
 
         //m_updateCharacterUI = m_world.GetECSWorld().CreateManager<UpdateCharacterUI>(m_world);
-        //characterCameraSystem = m_world.GetECSWorld().CreateManager<UpdateCharacterCamera>(m_world);
+        characterCameraSystem = m_world.GetECSWorld().CreateSystem<UpdateCharacterCamera>(m_world);
         //m_HandleCharacterEvents = m_world.GetECSWorld().CreateManager<HandleCharacterEvents>();
 
 
@@ -103,7 +103,7 @@ class CharacterModuleClient : CharacterModuleShared
         //    m_world.GetECSWorld().DestroyManager(system);
 
         ////        m_world.GetECSWorld().DestroyManager(m_InterpolatePresentationState);
-        //m_world.GetECSWorld().DestroyManager(m_UpdateCharPresentationState);
+        m_world.GetECSWorld().DestroySystem(m_UpdateCharPresentationState);
 
         //m_world.GetECSWorld().DestroyManager(m_ApplyPresentationState);
 
@@ -113,7 +113,7 @@ class CharacterModuleClient : CharacterModuleShared
         //m_world.GetECSWorld().DestroyManager(m_UpdatePresentationAttachmentTransform);
 
         //m_world.GetECSWorld().DestroyManager(m_updateCharacterUI);
-        //m_world.GetECSWorld().DestroyManager(characterCameraSystem);
+        m_world.GetECSWorld().DestroySystem(characterCameraSystem);
 
         //m_world.GetECSWorld().DestroyManager(m_HandleCharacterEvents);
 
@@ -129,7 +129,7 @@ class CharacterModuleClient : CharacterModuleShared
     }
 
     public void UpdatePresentation() {
-        //m_UpdateCharPresentationState.Update();
+        m_UpdateCharPresentationState.Update();
         //m_ApplyPresentationState.Update();
     }
 
@@ -145,7 +145,7 @@ class CharacterModuleClient : CharacterModuleShared
     public void CameraUpdate() {
         //m_CharacterLateUpdate.Update();
         //m_UpdatePresentationRootTransform.Update();
-        //characterCameraSystem.Update();
+        characterCameraSystem.Update();
         //m_UpdatePresentationAttachmentTransform.Update();
     }
 
@@ -158,9 +158,8 @@ class CharacterModuleClient : CharacterModuleShared
     //readonly List<ScriptBehaviourManager> m_LateUpdateSystems = new List<ScriptBehaviourManager>();
 
 
-
     ////    readonly InterpolatePresentationState m_InterpolatePresentationState;
-    //readonly UpdateCharPresentationState m_UpdateCharPresentationState;
+    readonly UpdateCharPresentationState m_UpdateCharPresentationState;
     //readonly ApplyPresentationState m_ApplyPresentationState;
 
     //readonly CharacterLateUpdate m_CharacterLateUpdate;
@@ -169,7 +168,7 @@ class CharacterModuleClient : CharacterModuleShared
     //readonly UpdatePresentationAttachmentTransform m_UpdatePresentationAttachmentTransform;
 
     //readonly UpdateCharacterUI m_updateCharacterUI;
-    //readonly UpdateCharacterCamera characterCameraSystem;
+    readonly UpdateCharacterCamera characterCameraSystem;
 
     //readonly HandleCharacterEvents m_HandleCharacterEvents;
 
