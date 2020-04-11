@@ -70,7 +70,7 @@ public class Game : MonoBehaviour
 
     [ConfigVar(Name = "server.tickrate", DefaultValue = "60", Description = "Tickrate for server", Flags = ConfigVar.Flags.ServerInfo)]
     public static ConfigVar serverTickRate;
-    [ConfigVar(Name = "config.mousesensitivity", DefaultValue = "1.5", Description = "Mouse sensitivity", Flags = ConfigVar.Flags.Save)]
+    [ConfigVar(Name = "config.mousesensitivity", DefaultValue = "2.5", Description = "Mouse sensitivity", Flags = ConfigVar.Flags.Save)]
     public static ConfigVar configMouseSensitivity;
     [ConfigVar(Name = "config.inverty", DefaultValue = "0", Description = "Invert y mouse axis", Flags = ConfigVar.Flags.Save)]
     public static ConfigVar configInvertY;

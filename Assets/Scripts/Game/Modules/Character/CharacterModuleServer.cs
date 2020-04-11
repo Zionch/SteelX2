@@ -162,8 +162,8 @@ public class HandleCharacterDespawnRequests : BaseComponentSystem
 
                 m_world.RequestDespawn(character.gameObject, PostUpdateCommands);
 
-                var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(request.characterEntity);
-                m_world.RequestDespawn(PostUpdateCommands, charRepAll.abilityCollection);
+                //var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(request.characterEntity);
+                //m_world.RequestDespawn(PostUpdateCommands, charRepAll.abilityCollection);
 
                 PostUpdateCommands.DestroyEntity(requestEntityArray[i]);
             }
@@ -293,7 +293,7 @@ public class CharacterModuleServer : CharacterModuleShared
 
 
         //m_HandleDamage = m_world.GetECSWorld().CreateManager<HandleDamage>(m_world);
-        //m_UpdatePresentationRootTransform = m_world.GetECSWorld().CreateManager<UpdatePresentationRootTransform>(m_world);
+        m_UpdatePresentationRootTransform = m_world.GetECSWorld().CreateSystem<UpdatePresentationRootTransform>(m_world);
         //m_UpdatePresentationAttachmentTransform = m_world.GetECSWorld().CreateManager<UpdatePresentationAttachmentTransform>(m_world);
     }
 
@@ -305,7 +305,7 @@ public class CharacterModuleServer : CharacterModuleShared
         m_world.GetECSWorld().DestroySystem(m_UpdateCharPresentationState);
 
         //m_world.GetECSWorld().DestroySystem(m_HandleDamage);
-        //m_world.GetECSWorld().DestroySystem(m_UpdatePresentationRootTransform);
+        m_world.GetECSWorld().DestroySystem(m_UpdatePresentationRootTransform);
         //m_world.GetECSWorld().DestroySystem(m_UpdatePresentationAttachmentTransform);
         //m_world.GetECSWorld().DestroySystem(m_ApplyPresentationState);
     }
@@ -324,18 +324,16 @@ public class CharacterModuleServer : CharacterModuleShared
         //m_ApplyPresentationState.Update();
     }
 
-    //public void AttachmentUpdate() {
-    //    m_UpdatePresentationRootTransform.Update();
-    //    m_UpdatePresentationAttachmentTransform.Update();
-    //}
+    public void AttachmentUpdate() {
+        m_UpdatePresentationRootTransform.Update();
+        //m_UpdatePresentationAttachmentTransform.Update();
+    }
 
     public void CleanupPlayer(PlayerState player) {
         if (player.controlledEntity != Entity.Null) {
             CharacterDespawnRequest.Create(m_world, player.controlledEntity);
         }
     }
-
-
 
     readonly HandleCharacterSpawnRequests m_HandleCharacterSpawnRequests;
     readonly HandleCharacterDespawnRequests m_HandleCharacterDespawnRequests;
@@ -345,6 +343,6 @@ public class CharacterModuleServer : CharacterModuleShared
 
     //readonly HandleDamage m_HandleDamage;
 
-    //readonly UpdatePresentationRootTransform m_UpdatePresentationRootTransform;
+    readonly UpdatePresentationRootTransform m_UpdatePresentationRootTransform;
     //readonly UpdatePresentationAttachmentTransform m_UpdatePresentationAttachmentTransform;
 }

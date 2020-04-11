@@ -76,7 +76,7 @@ class CharacterModuleClient : CharacterModuleShared
         //m_ApplyPresentationState = m_world.GetECSWorld().CreateManager<ApplyPresentationState>(m_world);
         //m_CharacterLateUpdate = m_world.GetECSWorld().CreateManager<CharacterLateUpdate>(m_world);
 
-        //m_UpdatePresentationRootTransform = m_world.GetECSWorld().CreateManager<UpdatePresentationRootTransform>(m_world);
+        m_UpdatePresentationRootTransform = m_world.GetECSWorld().CreateSystem<UpdatePresentationRootTransform>(m_world);
         //m_UpdatePresentationAttachmentTransform = m_world.GetECSWorld().CreateManager<UpdatePresentationAttachmentTransform>(m_world);
 
         //m_updateCharacterUI = m_world.GetECSWorld().CreateManager<UpdateCharacterUI>(m_world);
@@ -109,7 +109,7 @@ class CharacterModuleClient : CharacterModuleShared
 
         //m_world.GetECSWorld().DestroyManager(m_CharacterLateUpdate);
 
-        //m_world.GetECSWorld().DestroyManager(m_UpdatePresentationRootTransform);
+        m_world.GetECSWorld().DestroySystem(m_UpdatePresentationRootTransform);
         //m_world.GetECSWorld().DestroyManager(m_UpdatePresentationAttachmentTransform);
 
         //m_world.GetECSWorld().DestroyManager(m_updateCharacterUI);
@@ -144,7 +144,7 @@ class CharacterModuleClient : CharacterModuleShared
 
     public void CameraUpdate() {
         //m_CharacterLateUpdate.Update();
-        //m_UpdatePresentationRootTransform.Update();
+        m_UpdatePresentationRootTransform.Update();
         characterCameraSystem.Update();
         //m_UpdatePresentationAttachmentTransform.Update();
     }
@@ -164,13 +164,11 @@ class CharacterModuleClient : CharacterModuleShared
 
     //readonly CharacterLateUpdate m_CharacterLateUpdate;
 
-    //readonly UpdatePresentationRootTransform m_UpdatePresentationRootTransform;
+    readonly UpdatePresentationRootTransform m_UpdatePresentationRootTransform;
     //readonly UpdatePresentationAttachmentTransform m_UpdatePresentationAttachmentTransform;
 
     //readonly UpdateCharacterUI m_updateCharacterUI;
     readonly UpdateCharacterCamera characterCameraSystem;
 
     //readonly HandleCharacterEvents m_HandleCharacterEvents;
-
-
 }

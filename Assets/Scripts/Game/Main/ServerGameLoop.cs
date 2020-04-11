@@ -36,7 +36,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     }
 
     public void LateUpdate() {
-
+        m_CharacterModule.AttachmentUpdate();
     }
 
     public void ProcessCommand(int connectionId, int tick, ref NetworkReader data) {
@@ -329,6 +329,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
     public void OnDisconnect(int clientId) {
         ClientInfo client;
+
         if (m_Clients.TryGetValue(clientId, out client)) {
             if (_serverGameWorld != null)
                 _serverGameWorld.HandleClientDisconnect(client);

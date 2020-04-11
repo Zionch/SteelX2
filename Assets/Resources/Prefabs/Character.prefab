@@ -118,7 +118,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SerializedData:
     tick: 0
-    position: {x: 0, y: 0, z: 0}
+    position: {x: 1.86, y: 0, z: 0}
     velocity: {x: 0, y: 0, z: 0}
     locoState: 0
     locoStartTick: 0

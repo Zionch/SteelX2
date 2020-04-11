@@ -108,6 +108,7 @@ unsafe public struct NetworkReader
         result.x = (int)m_Input[m_Position++] * NetworkConfig.decoderPrecisionScales[m_CurrentField.precision];
         result.y = (int)m_Input[m_Position++] * NetworkConfig.decoderPrecisionScales[m_CurrentField.precision];
         result.z = (int)m_Input[m_Position++] * NetworkConfig.decoderPrecisionScales[m_CurrentField.precision];
+        
         return result;
     }
 

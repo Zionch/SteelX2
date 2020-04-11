@@ -362,7 +362,7 @@ unsafe public class NetworkServer
             var dirty = !entity.snapshots.Exists(m_ServerSequence - 1);
             if (!dirty) {
                 var previousSnapshot = entity.snapshots[m_ServerSequence - 1];
-                if (previousSnapshot.length != snapshotInfo.length || // TODO (petera) how could length differ???
+                if (previousSnapshot.length != snapshotInfo.length || // TODO how could length differ???
                     UnsafeUtility.MemCmp(previousSnapshot.start, snapshotInfo.start, snapshotInfo.length) != 0) {
                     dirty = true;
                 }
@@ -437,6 +437,7 @@ unsafe public class NetworkServer
         }
 
         GameDebug.Log($"Player {connectionId} is disconnected");
+        loop.OnDisconnect(connectionId);
 
         if (_serverConnections.ContainsKey(connectionId))
             _serverConnections.Remove(connectionId);

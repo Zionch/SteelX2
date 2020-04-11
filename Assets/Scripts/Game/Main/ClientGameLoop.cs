@@ -51,6 +51,36 @@ public class ClientGameWorld{
         //m_CharacterModule.HandleControlledEntityChanged();
 
         // Prediction
+        _gameWorld.WorldTime = m_PredictedTime;
+
+        if (IsPredictionAllowed()) {
+            // ROLLBACK. All predicted entities (with the ServerEntity component) are rolled back to last server state 
+            _gameWorld.WorldTime.SetTime(_networkClient.serverTime, m_PredictedTime.tickInterval);
+            PredictionRollback();
+
+
+            // PREDICT PREVIOUS TICKS. Replay every tick *after* the last tick we have from server up to the last stored command we have
+            for (var tick = _networkClient.serverTime + 1; tick < m_PredictedTime.tick; tick++) {
+                _gameWorld.WorldTime.SetTime(tick, m_PredictedTime.tickInterval);
+                m_PlayerModule.RetrieveCommand(_gameWorld.WorldTime.tick);
+                PredictionUpdate();
+#if UNITY_EDITOR                 
+                // We only want to store "full" tick to we use m_PredictedTime.tick-1 (as current can be fraction of tick)
+                m_ReplicatedEntityModule.StorePredictedState(tick, m_PredictedTime.tick - 1);
+#endif                
+            }
+
+            // PREDICT CURRENT TICK. Update current tick using duration of current tick
+            _gameWorld.WorldTime = m_PredictedTime;
+            m_PlayerModule.RetrieveCommand(_gameWorld.WorldTime.tick);
+            // Dont update systems with close to zero time. 
+            if (_gameWorld.WorldTime.tickDuration > 0.008f) {
+                PredictionUpdate();
+            }
+            //#if UNITY_EDITOR                 
+            //            m_ReplicatedEntityModule.StorePredictedState(m_PredictedTime.tick, m_PredictedTime.tick);
+            //#endif                
+        }
 
         //update presentation
         _gameWorld.WorldTime = m_PredictedTime;
@@ -165,6 +195,41 @@ public class ClientGameWorld{
         return m_localPlayer;
     }
 
+    bool IsPredictionAllowed() {
+        if (!m_PlayerModule.PlayerStateReady) {
+            GameDebug.Log("No predict! No player state.");
+            return false;
+        }
+
+        if (!m_PlayerModule.IsControllingEntity) {
+            GameDebug.Log("No predict! No controlled entity.");
+            return false;
+        }
+
+        if (m_PredictedTime.tick <= _networkClient.serverTime) {
+            GameDebug.Log("No predict! Predict time not ahead of server tick! " + GetFramePredictInfo());
+            return false;
+        }
+
+        if (!m_PlayerModule.HasCommands(_networkClient.serverTime + 1, m_PredictedTime.tick)) {
+            GameDebug.Log("No predict! No commands available. " + GetFramePredictInfo());
+            return false;
+        }
+
+        return true;
+    }
+
+    string GetFramePredictInfo() {
+        int firstCommandTick;
+        int lastCommandTick;
+        m_PlayerModule.GetBufferedCommandsTick(out firstCommandTick, out lastCommandTick);
+
+        return string.Format("Last server:{0} predicted:{1} buffer:{2}->{3} time since snap:{4}  rtt avr:{5}",
+            _networkClient.serverTime, m_PredictedTime.tick,
+            firstCommandTick, lastCommandTick,
+            _networkClient.timeSinceSnapshot, _networkStatistics.rtt.average);
+    }
+
     public void Shutdown() {
         m_CharacterModule.Shutdown();
         m_ReplicatedEntityModule.Shutdown();
@@ -173,6 +238,22 @@ public class ClientGameWorld{
 
     public ISnapshotConsumer GetSnapshotConsumer() {
         return m_ReplicatedEntityModule;
+    }
+
+    void PredictionRollback() {
+        m_ReplicatedEntityModule.Rollback();
+    }
+
+    void PredictionUpdate() {
+        //m_SpectatorCamModule.Update();
+
+        //m_CharacterModule.AbilityRequestUpdate();
+
+        //m_CharacterModule.MovementStart();
+        //m_CharacterModule.MovementResolve();
+
+        //m_CharacterModule.AbilityStart();
+        //m_CharacterModule.AbilityResolve();
     }
 
 

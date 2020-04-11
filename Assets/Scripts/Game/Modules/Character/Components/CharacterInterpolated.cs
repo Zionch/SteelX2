@@ -61,22 +61,22 @@ public struct CharacterInterpolatedData : IInterpolatedComponent<CharacterInterp
         writer.WriteInt32("damageTick", damageTick);
         writer.WriteFloatQ("damageDirection", damageDirection, 1);
 
-        writer.WriteFloatQ("moveAngleLocal", moveAngleLocal, 0);
-        writer.WriteFloatQ("shootPoseWeight", shootPoseWeight);
-        writer.WriteVector2Q("locomotionVector", locomotionVector);
-        writer.WriteFloatQ("locomotionPhase", locomotionPhase);
-        writer.WriteFloatQ("banking", banking);
-        writer.WriteFloatQ("landAnticWeight", landAnticWeight, 2);
-        writer.WriteFloatQ("turnStartAngle", turnStartAngle, 0);
-        writer.WriteInt16("turnDirection", turnDirection);
-        writer.WriteFloatQ("squashTime", squashTime, 2);
-        writer.WriteFloatQ("squashWeight", squashWeight, 2);
-        writer.WriteFloatQ("inAirTime", inAirTime, 2);
-        writer.WriteFloatQ("jumpTime", jumpTime, 2);
-        writer.WriteFloatQ("simpleTime", simpleTime, 2);
-        writer.WriteVector2Q("footIkOffset", footIkOffset, 2);
-        writer.WriteVector3Q("footIkNormalLeft", footIkNormalLeft, 2);
-        writer.WriteVector3Q("footIkNormaRight", footIkNormaRight, 2);
+        //writer.WriteFloatQ("moveAngleLocal", moveAngleLocal, 0);
+        //writer.WriteFloatQ("shootPoseWeight", shootPoseWeight);
+        //writer.WriteVector2Q("locomotionVector", locomotionVector);
+        //writer.WriteFloatQ("locomotionPhase", locomotionPhase);
+        //writer.WriteFloatQ("banking", banking);
+        //writer.WriteFloatQ("landAnticWeight", landAnticWeight, 2);
+        //writer.WriteFloatQ("turnStartAngle", turnStartAngle, 0);
+        //writer.WriteInt16("turnDirection", turnDirection);
+        //writer.WriteFloatQ("squashTime", squashTime, 2);
+        //writer.WriteFloatQ("squashWeight", squashWeight, 2);
+        //writer.WriteFloatQ("inAirTime", inAirTime, 2);
+        //writer.WriteFloatQ("jumpTime", jumpTime, 2);
+        //writer.WriteFloatQ("simpleTime", simpleTime, 2);
+        //writer.WriteVector2Q("footIkOffset", footIkOffset, 2);
+        //writer.WriteVector3Q("footIkNormalLeft", footIkNormalLeft, 2);
+        //writer.WriteVector3Q("footIkNormaRight", footIkNormaRight, 2);
     }
 
     public void Deserialize(ref SerializeContext context, ref NetworkReader reader) {
@@ -96,22 +96,22 @@ public struct CharacterInterpolatedData : IInterpolatedComponent<CharacterInterp
         damageTick = reader.ReadInt32();
         damageDirection = reader.ReadFloatQ();
 
-        moveAngleLocal = reader.ReadFloatQ();
-        shootPoseWeight = reader.ReadFloatQ();
-        locomotionVector = reader.ReadVector2Q();
-        locomotionPhase = reader.ReadFloatQ();
-        banking = reader.ReadFloatQ();
-        landAnticWeight = reader.ReadFloatQ();
-        turnStartAngle = reader.ReadFloatQ();
-        turnDirection = reader.ReadInt16();
-        squashTime = reader.ReadFloatQ();
-        squashWeight = reader.ReadFloatQ();
-        inAirTime = reader.ReadFloatQ();
-        jumpTime = reader.ReadFloatQ();
-        simpleTime = reader.ReadFloatQ();
-        footIkOffset = reader.ReadVector2Q();
-        footIkNormalLeft = reader.ReadVector3Q();
-        footIkNormaRight = reader.ReadVector3Q();
+        //moveAngleLocal = reader.ReadFloatQ();
+        //shootPoseWeight = reader.ReadFloatQ();
+        //locomotionVector = reader.ReadVector2Q();
+        //locomotionPhase = reader.ReadFloatQ();
+        //banking = reader.ReadFloatQ();
+        //landAnticWeight = reader.ReadFloatQ();
+        //turnStartAngle = reader.ReadFloatQ();
+        //turnDirection = reader.ReadInt16();
+        //squashTime = reader.ReadFloatQ();
+        //squashWeight = reader.ReadFloatQ();
+        //inAirTime = reader.ReadFloatQ();
+        //jumpTime = reader.ReadFloatQ();
+        //simpleTime = reader.ReadFloatQ();
+        //footIkOffset = reader.ReadVector2Q();
+        //footIkNormalLeft = reader.ReadVector3Q();
+        //footIkNormaRight = reader.ReadVector3Q();
     }
 
     public void Interpolate(ref SerializeContext context, ref CharacterInterpolatedData prevState,

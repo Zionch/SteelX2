@@ -29,25 +29,25 @@ public class MechPresentationSetup : MonoBehaviour
     [NonSerialized] bool isVisible = true;
 }
 
-//[DisableAutoCreation]
-//public class UpdatePresentationRootTransform : BaseComponentSystem<CharacterPresentationSetup>
-//{
-//    private ComponentGroup Group;
+[DisableAutoCreation]
+public class UpdatePresentationRootTransform : BaseComponentSystem<MechPresentationSetup>
+{
+    private EntityQuery Group;
 
-//    public UpdatePresentationRootTransform(GameWorld world) : base(world) { }
+    public UpdatePresentationRootTransform(GameWorld world) : base(world) { }
 
-//    protected override void Update(Entity entity, CharacterPresentationSetup charPresentation) {
-//        if (!charPresentation.updateTransform)
-//            return;
+    protected override void Update(Entity entity, MechPresentationSetup charPresentation) {
+        if (!charPresentation.updateTransform)
+            return;
 
-//        if (charPresentation.attachToPresentation != Entity.Null)
-//            return;
+        if (charPresentation.attachToPresentation != Entity.Null)
+            return;
 
-//        var animState = EntityManager.GetComponentData<CharacterInterpolatedData>(charPresentation.character);
-//        charPresentation.transform.position = animState.position;
-//        charPresentation.transform.rotation = Quaternion.Euler(0f, animState.rotation, 0f);
-//    }
-//}
+        var animState = EntityManager.GetComponentData<CharacterInterpolatedData>(charPresentation.character);
+        charPresentation.transform.position = animState.position;
+        charPresentation.transform.rotation = Quaternion.Euler(0f, animState.rotation, 0f);
+    }
+}
 
 //[DisableAutoCreation]
 //public class UpdatePresentationAttachmentTransform : BaseComponentSystem<CharacterPresentationSetup>
