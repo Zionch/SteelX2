@@ -18,8 +18,9 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
     {
         Stand,
         GroundMove,
+        GroundBoosting,
         Jump,
-        DoubleJump,
+        JumpBoosting,
         InAir,
         MaxValue
     }
@@ -34,7 +35,6 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
         NumActions,
     }
 
-
     public int tick;                    // Tick is only for debug purposes
     public Vector3 position;
     public Vector3 velocity;
@@ -42,8 +42,8 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
     public int locoStartTick;
     public Action action;
     public int actionStartTick;
-    public int jumpCount;
-    public int sprinting;
+    public int boostingInAirCount;
+    public int boosting;
 
     public CameraProfile cameraProfile;
 
@@ -69,8 +69,8 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
         writer.WriteInt32("phase", (int)locoState);
         writer.WriteInt32("phaseStartTick", locoStartTick);
         writer.WriteVector3Q("position", position, 2);
-        writer.WriteInt32("jumpCount", jumpCount);
-        writer.WriteBoolean("sprint", sprinting == 1);
+        writer.WriteInt32("boostingInAirCount", boostingInAirCount);
+        writer.WriteBoolean("boosting", boosting == 1);
         writer.WriteByte("cameraProfile", (byte)cameraProfile);
         writer.WriteInt32("damageTick", damageTick);
         writer.WriteVector3Q("damageDirection", damageDirection);
@@ -84,15 +84,16 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
         locoState = (LocoState)reader.ReadInt32();
         locoStartTick = reader.ReadInt32();
         position = reader.ReadVector3Q();
-        jumpCount = reader.ReadInt32();
-        sprinting = reader.ReadBoolean() ? 1 : 0;
+        boostingInAirCount = reader.ReadInt32();
+        boosting = reader.ReadBoolean() ? 1 : 0;
         cameraProfile = (CameraProfile)reader.ReadByte();
         damageTick = reader.ReadInt32();
         damageDirection = reader.ReadVector3Q();
     }
 
     public bool IsOnGround() {
-        return locoState == CharacterPredictedData.LocoState.Stand || locoState == CharacterPredictedData.LocoState.GroundMove;
+        return locoState == CharacterPredictedData.LocoState.Stand || locoState == CharacterPredictedData.LocoState.GroundMove || 
+            locoState == CharacterPredictedData.LocoState.GroundBoosting;
     }
 
 #if UNITY_EDITOR
@@ -103,8 +104,8 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
                && locoStartTick == state.locoStartTick
                && action == state.action
                && actionStartTick == state.actionStartTick
-               && jumpCount == state.jumpCount
-               && sprinting == state.sprinting
+               && boostingInAirCount == state.boostingInAirCount
+               && boosting == state.boosting
                && damageTick == state.damageTick;
     }
 
@@ -117,8 +118,8 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
         strBuilder.AppendLine("loco:" + locoState);
         strBuilder.AppendLine("phaseStartTick:" + locoStartTick);
         strBuilder.AppendLine("position:" + position);
-        strBuilder.AppendLine("jumpCount:" + jumpCount);
-        strBuilder.AppendLine("sprinting:" + sprinting);
+        strBuilder.AppendLine("jumpCount:" + boostingInAirCount);
+        strBuilder.AppendLine("sprinting:" + boosting);
         strBuilder.AppendLine("damageTick:" + damageTick);
         strBuilder.AppendLine("damageDirection:" + damageDirection);
         return strBuilder.ToString();

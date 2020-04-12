@@ -18,4 +18,20 @@ MonoBehaviour:
     FOVInceraetSpeed: 1
     FOVDecreaseSpeed: 0.2
   eyeHeight: 1.8
+  characterMovementSettings:
+    slopeLimit: 50
+    stepOffset: 0.5
+    skinWidth: 0.08
+    minMoveDistance: 0.001
+    center:
+      x: 0
+      y: 1.18
+      z: 0
+    radius: 0.5
+    height: 2.2
+  abilities:
+    val0: 187516681
+    val1: 480539257
+    val2: -2100057813
+    val3: -1818532451
   Mech: {fileID: 11400000, guid: 5f97e680e9f5a964db091208a71c71cf, type: 2}

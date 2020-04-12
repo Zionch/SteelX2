@@ -247,13 +247,13 @@ public class ClientGameWorld{
     void PredictionUpdate() {
         //m_SpectatorCamModule.Update();
 
-        //m_CharacterModule.AbilityRequestUpdate();
+        m_CharacterModule.AbilityRequestUpdate();
 
         //m_CharacterModule.MovementStart();
         //m_CharacterModule.MovementResolve();
 
-        //m_CharacterModule.AbilityStart();
-        //m_CharacterModule.AbilityResolve();
+        m_CharacterModule.AbilityStart();
+        m_CharacterModule.AbilityResolve();
     }
 
 

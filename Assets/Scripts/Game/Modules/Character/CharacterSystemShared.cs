@@ -67,8 +67,8 @@ public class HandleCharacterSpawn : InitializeComponentGroupSystem<Character, Ha
             //EntityManager.SetComponentData(charEntity, healthState);
 
             // Setup CharacterMoveQuery
-            //var moveQuery = EntityManager.GetComponentObject<CharacterMoveQuery>(charEntity);
-            //moveQuery.Initialize(heroTypeAsset.characterMovementSettings, charEntity);
+            var moveQuery = EntityManager.GetComponentObject<CharacterMoveQuery>(charEntity);
+            moveQuery.Initialize(mechTypeAsset.characterMovementSettings, charEntity);
 
             // Setup HitCollisionHistory
             //if (EntityManager.HasComponent<HitCollisionData>(charPresentationEntity)) {
@@ -86,16 +86,16 @@ public class HandleCharacterSpawn : InitializeComponentGroupSystem<Character, Ha
 
 
             // Setup abilities
-            //GameDebug.Assert(EntityManager.Exists(characterRepAll.abilityCollection), "behavior controller entity does not exist");
-            //var buffer = EntityManager.GetBuffer<EntityGroupChildren>(characterRepAll.abilityCollection);
-            //for (int j = 0; j < buffer.Length; j++) {
-            //    var childEntity = buffer[j].entity;
-            //    if (EntityManager.HasComponent<CharBehaviour>(childEntity)) {
-            //        var charBehaviour = EntityManager.GetComponentData<CharBehaviour>(childEntity);
-            //        charBehaviour.character = charEntity;
-            //        EntityManager.SetComponentData(childEntity, charBehaviour);
-            //    }
-            //}
+            GameDebug.Assert(EntityManager.Exists(characterRepAll.abilityCollection), "behavior controller entity does not exist");
+            var buffer = EntityManager.GetBuffer<EntityGroupChildren>(characterRepAll.abilityCollection);
+            for (int j = 0; j < buffer.Length; j++) {
+                var childEntity = buffer[j].entity;
+                if (EntityManager.HasComponent<CharBehaviour>(childEntity)) {
+                    var charBehaviour = EntityManager.GetComponentData<CharBehaviour>(childEntity);
+                    charBehaviour.character = charEntity;
+                    EntityManager.SetComponentData(childEntity, charBehaviour);
+                }
+            }
 
             // Create items
             //foreach (var itemEntry in heroTypeAsset.items) {
@@ -199,7 +199,7 @@ public class UpdateCharPresentationState : BaseComponentSystem
             // TODO: Move this into the network
             animState.position = charPredictedState.position;
             animState.charLocoTick = charPredictedState.locoStartTick;
-            animState.sprinting = charPredictedState.sprinting;
+            animState.sprinting = charPredictedState.boosting;
             animState.charAction = charPredictedState.action;
             animState.charActionTick = charPredictedState.actionStartTick;
             animState.aimYaw = userCommand.lookYaw;
@@ -251,64 +251,63 @@ public class UpdateCharPresentationState : BaseComponentSystem
 }
 
 
-//[DisableAutoCreation]
-//public class GroundTest : BaseComponentSystem
-//{
-//    ComponentGroup Group;
+[DisableAutoCreation]
+public class GroundTest : BaseComponentSystem
+{
+    EntityQuery Group;
 
-//    public GroundTest(GameWorld gameWorld) : base(gameWorld) {
-//        m_defaultLayer = LayerMask.NameToLayer("Default");
-//        m_playerLayer = LayerMask.NameToLayer("collision_player");
-//        m_platformLayer = LayerMask.NameToLayer("Platform");
+    public GroundTest(GameWorld gameWorld) : base(gameWorld) {
+        m_defaultLayer = LayerMask.NameToLayer("Default");
+        m_playerLayer = LayerMask.NameToLayer("collision_player");
+        m_platformLayer = LayerMask.NameToLayer("Platform");
 
-//        m_mask = 1 << m_defaultLayer | 1 << m_playerLayer | 1 << m_platformLayer;
-//    }
+        m_mask = 1 << m_defaultLayer | 1 << m_playerLayer | 1 << m_platformLayer;
+    }
 
-//    protected override void OnCreateManager() {
-//        base.OnCreateManager();
-//        Group = GetComponentGroup(typeof(ServerEntity), typeof(Character), typeof(CharacterPredictedData));
-//    }
+    protected override void OnCreate() {
+        base.OnCreate();
+        Group = GetEntityQuery(typeof(ServerEntity), typeof(Character), typeof(CharacterPredictedData));
+    }
 
-//    protected override void OnUpdate() {
-//        var charPredictedStateArray = Group.GetComponentDataArray<CharacterPredictedData>();
-//        var characterArray = Group.GetComponentArray<Character>();
+    protected override void OnUpdate() {
+        var charPredictedStateArray = Group.ToComponentDataArray<CharacterPredictedData>(Allocator.TempJob);
+        var characterArray = Group.ToComponentArray<Character>();
 
-//        var startOffset = 1f;
-//        var distance = 3f;
+        var startOffset = 1f;
+        var distance = 3f;
 
-//        var rayCommands = new NativeArray<RaycastCommand>(charPredictedStateArray.Length, Allocator.TempJob);
-//        var rayResults = new NativeArray<RaycastHit>(charPredictedStateArray.Length, Allocator.TempJob);
+        var rayCommands = new NativeArray<RaycastCommand>(charPredictedStateArray.Length, Allocator.TempJob);
+        var rayResults = new NativeArray<RaycastHit>(charPredictedStateArray.Length, Allocator.TempJob);
 
-//        for (var i = 0; i < charPredictedStateArray.Length; i++) {
-//            var charPredictedState = charPredictedStateArray[i];
-//            var origin = charPredictedState.position + Vector3.up * startOffset;
-//            rayCommands[i] = new RaycastCommand(origin, Vector3.down, distance, m_mask);
-//        }
+        for (var i = 0; i < charPredictedStateArray.Length; i++) {
+            var charPredictedState = charPredictedStateArray[i];
+            var origin = charPredictedState.position + Vector3.up * startOffset;
+            rayCommands[i] = new RaycastCommand(origin, Vector3.down, distance, m_mask);
+        }
 
-//        var handle = RaycastCommand.ScheduleBatch(rayCommands, rayResults, 10);
-//        handle.Complete();
+        var handle = RaycastCommand.ScheduleBatch(rayCommands, rayResults, 10);
+        handle.Complete();
 
-//        for (var i = 0; i < characterArray.Length; i++) {
-//            var character = characterArray[i];
-//            character.groundCollider = rayResults[i].collider;
-//            character.altitude = character.groundCollider != null ? rayResults[i].distance - startOffset : distance - startOffset;
+        for (var i = 0; i < characterArray.Length; i++) {
+            var character = characterArray[i];
+            character.groundCollider = rayResults[i].collider;
+            character.altitude = character.groundCollider != null ? rayResults[i].distance - startOffset : distance - startOffset;
 
-//            if (character.groundCollider != null)
-//                character.groundNormal = rayResults[i].normal;
-//        }
+            if (character.groundCollider != null)
+                character.groundNormal = rayResults[i].normal;
+        }
 
-//        rayCommands.Dispose();
-//        rayResults.Dispose();
-//    }
+        rayCommands.Dispose();
+        rayResults.Dispose();
 
-//    readonly int m_defaultLayer;
-//    readonly int m_playerLayer;
-//    readonly int m_platformLayer;
-//    readonly int m_mask;
-//}
+        charPredictedStateArray.Dispose();
+    }
 
-
-
+    readonly int m_defaultLayer;
+    readonly int m_playerLayer;
+    readonly int m_platformLayer;
+    readonly int m_mask;
+}
 
 //[DisableAutoCreation]
 //public class ApplyPresentationState : BaseComponentSystem

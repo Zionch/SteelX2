@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: -8148346818259099150}
   - component: {fileID: 2969896554934386469}
   - component: {fileID: -6047677048624956607}
+  - component: {fileID: 5178836819710231829}
   m_Layer: 0
   m_Name: Character
   m_TagString: Untagged
@@ -79,7 +80,7 @@ MonoBehaviour:
       val1: 821302306
       val2: 1746847130
       val3: 1290797049
-  netID: 1ed60fb544587c4b8f3a913788b18c31
+  netID: 65361869ad562948862696881fab7726
 --- !u!114 &3127962712601630217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -124,8 +125,8 @@ MonoBehaviour:
     locoStartTick: 0
     action: 0
     actionStartTick: 0
-    jumpCount: 0
-    sprinting: 0
+    boostingInAirCount: 0
+    boosting: 0
     cameraProfile: 0
     damageTick: 0
     damageDirection: {x: 0, y: 0, z: 0}
@@ -174,3 +175,15 @@ MonoBehaviour:
     footIkOffset: {x: 0, y: 0}
     footIkNormalLeft: {x: 0, y: 0, z: 0}
     footIkNormaRight: {x: 0, y: 0, z: 0}
+--- !u!114 &5178836819710231829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2336937637921779019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 561b5008c148444458064f0ee847b5fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

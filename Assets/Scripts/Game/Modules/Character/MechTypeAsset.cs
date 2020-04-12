@@ -22,7 +22,10 @@ public class MechTypeAsset : ScriptableObject
     public float health = 100;
     public SprintCameraSettings sprintCameraSettings = new SprintCameraSettings();
     public float eyeHeight = 1.8f;
-    //public CharacterMoveQuery.Settings characterMovementSettings;
+    public CharacterMoveQuery.Settings characterMovementSettings;
+
+    [AssetType(typeof(ReplicatedEntityFactory))]
+    public WeakAssetReference abilities;
 
     public MechTypeDefinition Mech;
     //public ItemEntry[] items;

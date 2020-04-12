@@ -40,7 +40,7 @@ public class InputSystem
         command.lookPitch = Mathf.Clamp(command.lookPitch, 0, 180);
 
         command.buttons.Or(UserCommand.Button.Jump, Game.Input.GetKeyDown(KeyCode.Space) || Game.Input.GetKeyDown(KeyCode.Joystick1Button0));
-        command.buttons.Or(UserCommand.Button.Boost, Game.Input.GetKey(KeyCode.LeftControl) || Game.Input.GetKey(KeyCode.Joystick1Button4));
+        command.buttons.Or(UserCommand.Button.Boost, Game.Input.GetKey(KeyCode.LeftShift) || Game.Input.GetKey(KeyCode.Joystick1Button4));
         command.buttons.Or(UserCommand.Button.PrimaryFire, (Game.Input.GetMouseButton(0) && Game.GetMousePointerLock()));// || (Game.Input.GetAxisRaw("Trigger") < -0.5f));
         command.buttons.Or(UserCommand.Button.SecondaryFire, Game.Input.GetMouseButton(1) || Game.Input.GetKey(KeyCode.Joystick1Button5));
         command.buttons.Or(UserCommand.Button.Ability1, Game.Input.GetKey(KeyCode.LeftShift));

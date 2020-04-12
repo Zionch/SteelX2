@@ -491,7 +491,7 @@ unsafe public class NetworkServer
         public void ReadPackage(byte[] packageData, INetworkCallbacks loop) {
             counters.bytesIn += packageData.Length;
 
-            Array.Copy(packageData, 0, packageBuffer, 0, packageData.Length);
+            NetworkUtils.MemCopy(packageData, 0, packageBuffer, 0, packageData.Length);
 
             NetworkMessage content;
 

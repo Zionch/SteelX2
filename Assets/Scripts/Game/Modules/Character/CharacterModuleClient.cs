@@ -64,10 +64,10 @@ class CharacterModuleClient : CharacterModuleShared
         CharacterBehaviours.CreateHandleDespawnSystems(m_world, m_HandleDespawnSystems);
 
         // Behaviors
-        //CharacterBehaviours.CreateAbilityRequestSystems(m_world, m_AbilityRequestUpdateSystems);
-        //CharacterBehaviours.CreateMovementStartSystems(m_world, m_MovementStartSystems);
-        //CharacterBehaviours.CreateMovementResolveSystems(m_world, m_MovementResolveSystems);
-        //CharacterBehaviours.CreateAbilityStartSystems(m_world, m_AbilityStartSystems);
+        CharacterBehaviours.CreateAbilityRequestSystems(m_world, m_AbilityRequestUpdateSystems);
+        CharacterBehaviours.CreateMovementStartSystems(m_world, m_MovementStartSystems);
+        CharacterBehaviours.CreateMovementResolveSystems(m_world, m_MovementResolveSystems);
+        CharacterBehaviours.CreateAbilityStartSystems(m_world, m_AbilityStartSystems);
         //CharacterBehaviours.CreateAbilityResolveSystems(m_world, m_AbilityResolveSystems);
 
         // Interpolation        
@@ -91,7 +91,7 @@ class CharacterModuleClient : CharacterModuleShared
         //    resourceSystem.GetSingleAssetResource(charRegistry.entries[i].prefabClient);
         //}
 
-        Console.AddCommand("thirdperson", CmdToggleThirdperson, "Toggle third person mode", this.GetHashCode());
+        //Console.AddCommand("thirdperson", CmdToggleThirdperson, "Toggle third person mode", this.GetHashCode());
     }
 
     public override void Shutdown() {

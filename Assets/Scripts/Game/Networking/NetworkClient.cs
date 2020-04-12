@@ -229,7 +229,7 @@ public class NetworkClient
         public void ReadPackage(byte[] packageData, ISnapshotConsumer snapshotConsumer, INetworkCallbacks networkClientConsumer) {
             counters.bytesIn += packageData.Length;
 
-            Array.Copy(packageData, 0, packageBuffer, 0, packageData.Length);
+            NetworkUtils.MemCopy(packageData, 0, packageBuffer, 0, packageData.Length);
 
             NetworkMessage content;
             int headerSize;

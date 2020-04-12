@@ -31,11 +31,11 @@ public abstract class CharacterModuleShared
     protected SystemCollection m_HandleSpawnSystems = new SystemCollection();
     protected SystemCollection m_HandleDespawnSystems = new SystemCollection();
 
-    //protected SystemCollection m_AbilityRequestUpdateSystems = new SystemCollection();
-    //protected SystemCollection m_MovementStartSystems = new SystemCollection();
-    //protected SystemCollection m_MovementResolveSystems = new SystemCollection();
-    //protected SystemCollection m_AbilityStartSystems = new SystemCollection();
-    //protected SystemCollection m_AbilityResolveSystems = new SystemCollection();
+    protected SystemCollection m_AbilityRequestUpdateSystems = new SystemCollection();
+    protected SystemCollection m_MovementStartSystems = new SystemCollection();
+    protected SystemCollection m_MovementResolveSystems = new SystemCollection();
+    protected SystemCollection m_AbilityStartSystems = new SystemCollection();
+    protected SystemCollection m_AbilityResolveSystems = new SystemCollection();
 
 
     public CharacterModuleShared(GameWorld world) {
@@ -46,11 +46,11 @@ public abstract class CharacterModuleShared
         //m_ControlledEntityChangedSystems.Shutdown(m_world.GetECSWorld());
         m_HandleSpawnSystems.Shutdown(m_world.GetECSWorld());
         m_HandleDespawnSystems.Shutdown(m_world.GetECSWorld());
-        //m_AbilityRequestUpdateSystems.Shutdown(m_world.GetECSWorld());
-        //m_MovementStartSystems.Shutdown(m_world.GetECSWorld());
-        //m_MovementResolveSystems.Shutdown(m_world.GetECSWorld());
-        //m_AbilityStartSystems.Shutdown(m_world.GetECSWorld());
-        //m_AbilityResolveSystems.Shutdown(m_world.GetECSWorld());
+        m_AbilityRequestUpdateSystems.Shutdown(m_world.GetECSWorld());
+        m_MovementStartSystems.Shutdown(m_world.GetECSWorld());
+        m_MovementResolveSystems.Shutdown(m_world.GetECSWorld());
+        m_AbilityStartSystems.Shutdown(m_world.GetECSWorld());
+        m_AbilityResolveSystems.Shutdown(m_world.GetECSWorld());
     }
 
     public void HandleSpawns() {
@@ -65,24 +65,23 @@ public abstract class CharacterModuleShared
     //    m_ControlledEntityChangedSystems.Update();
     //}
 
-    //public void AbilityRequestUpdate() {
-    //    m_AbilityRequestUpdateSystems.Update();
-    //}
+    public void AbilityRequestUpdate() {
+        m_AbilityRequestUpdateSystems.Update();
+    }
 
+    public void MovementStart() {
+        m_MovementStartSystems.Update();
+    }
 
-    //public void MovementStart() {
-    //    m_MovementStartSystems.Update();
-    //}
+    public void MovementResolve() {
+        m_MovementResolveSystems.Update();
+    }
 
-    //public void MovementResolve() {
-    //    m_MovementResolveSystems.Update();
-    //}
+    public void AbilityStart() {
+        m_AbilityStartSystems.Update();
+    }
 
-    //public void AbilityStart() {
-    //    m_AbilityStartSystems.Update();
-    //}
-
-    //public void AbilityResolve() {
-    //    m_AbilityResolveSystems.Update();
-    //}
+    public void AbilityResolve() {
+        m_AbilityResolveSystems.Update();
+    }
 }

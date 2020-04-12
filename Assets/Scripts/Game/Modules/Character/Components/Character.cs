@@ -15,6 +15,12 @@ public class Character : MonoBehaviour{
     [NonSerialized] public Quaternion m_TeleportToRotation;
     [NonSerialized] public bool m_TeleportPending;
 
+    [NonSerialized] public int teamId = -1;
+
+    [NonSerialized] public float altitude;
+    [NonSerialized] public Collider groundCollider;
+    [NonSerialized] public Vector3 groundNormal;
+
     public void TeleportTo(Vector3 position, Quaternion rotation) {
         m_TeleportPending = true;
         m_TeleportToPosition = position;

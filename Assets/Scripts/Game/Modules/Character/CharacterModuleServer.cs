@@ -93,35 +93,32 @@ public class HandleCharacterSpawnRequests : BaseComponentSystem
 
     public Character SpawnCharacter(GameWorld world, PlayerState owner, Vector3 position, Quaternion rotation,
         MechSettings mechSettings, BundledResourceManager resourceSystem) {
-        //var heroTypeRegistry = resourceSystem.GetResourceRegistry<HeroTypeRegistry>();
+        var mechTypeRegistry = resourceSystem.GetResourceRegistry<MechTypeRegistry>();
 
-        //heroIndex = Mathf.Min(heroIndex, heroTypeRegistry.entries.Count);
-        //var heroTypeAsset = heroTypeRegistry.entries[heroIndex];
+        var mechIndex = Mathf.Min(mechSettings.MechType, mechTypeRegistry.entries.Count);
+        var mechTypeAsset = mechTypeRegistry.entries[mechIndex];
 
         var replicatedEntityRegistry = resourceSystem.GetResourceRegistry<ReplicatedEntityRegistry>();
         var charEntity = replicatedEntityRegistry.Create(EntityManager, resourceSystem, m_world, m_settings.character);
 
         var character = EntityManager.GetComponentObject<Character>(charEntity);
-        //character.teamId = 0;
+        character.teamId = 0;
         character.TeleportTo(position, rotation);
 
         var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(charEntity);
         charRepAll.MechSettings = mechSettings;
 
-        //charRepAll.abilityCollection = heroTypeAsset.abilities.Create(EntityManager, resourceSystem, m_world);
-
-        //charRepAll.abilityCollection = resourceSystem.CreateEntity(heroTypeAsset.abilities);
-        //EntityManager.SetComponentData(charEntity, charRepAll);
+        charRepAll.abilityCollection = resourceSystem.CreateEntity(mechTypeAsset.abilities);
+        EntityManager.SetComponentData(charEntity, charRepAll);
 
         // Set as predicted by owner
         var replicatedEntity = EntityManager.GetComponentData<ReplicatedEntityData>(charEntity);
         replicatedEntity.predictingPlayerId = owner.playerId;
         EntityManager.SetComponentData(charEntity, replicatedEntity);
 
-
-        //var behaviorCtrlRepEntity = EntityManager.GetComponentData<ReplicatedEntityData>(charRepAll.abilityCollection);
-        //behaviorCtrlRepEntity.predictingPlayerId = owner.playerId;
-        //EntityManager.SetComponentData(charRepAll.abilityCollection, behaviorCtrlRepEntity);
+        var behaviorCtrlRepEntity = EntityManager.GetComponentData<ReplicatedEntityData>(charRepAll.abilityCollection);
+        behaviorCtrlRepEntity.predictingPlayerId = owner.playerId;
+        EntityManager.SetComponentData(charRepAll.abilityCollection, behaviorCtrlRepEntity);
 
         return character;
     }
@@ -162,8 +159,8 @@ public class HandleCharacterDespawnRequests : BaseComponentSystem
 
                 m_world.RequestDespawn(character.gameObject, PostUpdateCommands);
 
-                //var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(request.characterEntity);
-                //m_world.RequestDespawn(PostUpdateCommands, charRepAll.abilityCollection);
+                var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(request.characterEntity);
+                m_world.RequestDespawn(PostUpdateCommands, charRepAll.abilityCollection);
 
                 PostUpdateCommands.DestroyEntity(requestEntityArray[i]);
             }
@@ -280,11 +277,11 @@ public class CharacterModuleServer : CharacterModuleShared
         CharacterBehaviours.CreateHandleDespawnSystems(m_world, m_HandleDespawnSystems);
 
         // Behavior
-        //CharacterBehaviours.CreateAbilityRequestSystems(m_world, m_AbilityRequestUpdateSystems);
+        CharacterBehaviours.CreateAbilityRequestSystems(m_world, m_AbilityRequestUpdateSystems);
         //m_MovementStartSystems.Add(m_world.GetECSWorld().CreateManager<UpdateTeleportation>(m_world));
-        //CharacterBehaviours.CreateMovementStartSystems(m_world, m_MovementStartSystems);
-        //CharacterBehaviours.CreateMovementResolveSystems(m_world, m_MovementResolveSystems);
-        //CharacterBehaviours.CreateAbilityStartSystems(m_world, m_AbilityStartSystems);
+        CharacterBehaviours.CreateMovementStartSystems(m_world, m_MovementStartSystems);
+        CharacterBehaviours.CreateMovementResolveSystems(m_world, m_MovementResolveSystems);
+        CharacterBehaviours.CreateAbilityStartSystems(m_world, m_AbilityStartSystems);
         //CharacterBehaviours.CreateAbilityResolveSystems(m_world, m_AbilityResolveSystems);
 
 

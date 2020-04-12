@@ -87,6 +87,11 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         movableSystemServer.Update();
 
         // Update movement of player controlled units 
+        m_CharacterModule.AbilityRequestUpdate();
+        m_CharacterModule.MovementStart();
+        m_CharacterModule.MovementResolve();
+        m_CharacterModule.AbilityStart();
+        m_CharacterModule.AbilityResolve();
 
         // Finalize movement of modules that only depend on data from previous frames
         // We want to wait as long as possible so queries potentially can be handled in jobs  

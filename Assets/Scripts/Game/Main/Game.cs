@@ -80,6 +80,7 @@ public class Game : MonoBehaviour
     public System.Diagnostics.Stopwatch Clock { get; private set; }
     private long m_StopwatchFrequency;
 
+    public static GameConfiguration config;
     public static InputSystem inputSystem;
     public LevelManager levelManager;
     public Camera bootCamera;
@@ -148,7 +149,8 @@ public class Game : MonoBehaviour
         QualitySettings.vSyncCount = 0;//need to make the target frame rate work even in headless mode
 #endif
         InitConsole(IsHeadless, commandLineArgs);
-        Application.targetFrameRate = 30;
+        if(IsHeadless)
+            Application.targetFrameRate = 60;
 
         RegisterConsoleCommands();
 
@@ -161,6 +163,9 @@ public class Game : MonoBehaviour
         levelManager = new LevelManager();
         levelManager.Init();
         inputSystem = new InputSystem();
+
+        // TODO added Instantiate here to avoid making changes to asset file.
+        config = Instantiate((GameConfiguration)Resources.Load("GameConfiguration"));
 
         PushCamera(bootCamera);
     }
