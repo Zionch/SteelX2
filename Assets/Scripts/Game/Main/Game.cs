@@ -149,8 +149,7 @@ public class Game : MonoBehaviour
         QualitySettings.vSyncCount = 0;//need to make the target frame rate work even in headless mode
 #endif
         InitConsole(IsHeadless, commandLineArgs);
-        if(IsHeadless)
-            Application.targetFrameRate = 60;
+        Application.targetFrameRate = 60;
 
         RegisterConsoleCommands();
 

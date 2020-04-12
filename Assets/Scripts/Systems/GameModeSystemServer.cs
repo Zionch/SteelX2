@@ -66,7 +66,7 @@ public class GameModeSystemServer : ComponentSystem
                 var position = new Vector3(0.0f, 0.2f, 0.0f);
                 var rotation = Quaternion.identity;
 
-                //CharacterSpawnRequest.Create(PostUpdateCommands, charControl.MechSettings, position, rotation, playerEntity);
+                CharacterSpawnRequest.Create(PostUpdateCommands, charControl.MechSettings, position, rotation, playerEntity);
 
                 continue;
             }
