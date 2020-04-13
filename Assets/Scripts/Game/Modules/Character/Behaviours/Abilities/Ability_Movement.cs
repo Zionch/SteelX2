@@ -48,13 +48,6 @@ class Movement_RequestActive : BaseComponentDataSystem<CharBehaviour, AbilityCon
 [DisableAutoCreation]
 class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, Ability_Movement.Settings>
 {
-    [ConfigVar(Name = "debug.charactermove", Description = "Show graphs of one character's movement along x, y, z", DefaultValue = "0")]
-    public static ConfigVar debugCharacterMove;
-
-    // Debugging graphs to show player movement in 3 axis
-    static float[] movehist_x = new float[100];
-    static float[] movehist_y = new float[100];
-    static float[] movehist_z = new float[100];
     static float lastUsedFrame;
 
     readonly int m_platformLayer;
@@ -81,7 +74,6 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
         abilityCtrl.behaviorState = AbilityControl.State.Active;
         EntityManager.SetComponentData(abilityEntity, abilityCtrl);
 
-
         var time = m_world.WorldTime;
 
         var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;
@@ -104,18 +96,8 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             }
         }
 
-        // Jump
-        if (isOnGround)
-            predictedState.boostingInAirCount = 0;
-
         if (command.buttons.IsSet(UserCommand.Button.Jump) && isOnGround) {
             newPhase = CharacterPredictedData.LocoState.Jump;
-        }
-
-        if (command.buttons.IsSet(UserCommand.Button.Jump) && predictedState.locoState == CharacterPredictedData.LocoState.InAir && predictedState.boostingInAirCount == 0) {
-            predictedState.boostingInAirCount++;
-            predictedState.velocity.y = 0;
-            newPhase = CharacterPredictedData.LocoState.JumpBoosting;
         }
 
         if (predictedState.locoState == CharacterPredictedData.LocoState.Jump) {
@@ -187,12 +169,6 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             if (velocity.y < -Game.config.maxFallVelocity)
                 velocity.y = -Game.config.maxFallVelocity;
 
-            // Cheat movement
-            //if (command.buttons.IsSet(UserCommand.Button.Boost) && (Game.GetGameLoop<PreviewGameLoop>() != null)) {
-            //    velocity.y += 25.0f * gameTime.tickDuration;
-            //    velocity.y = Mathf.Clamp(velocity.y, -2.0f, 10.0f);
-            //}
-
             deltaPos = velocity * gameTime.tickDuration;
 
             return;
@@ -201,13 +177,10 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
         var playerSpeed = predicted.boosting == 1 ? Game.config.playerBoostingSpeed : Game.config.playerSpeed;
 
         velocity = CalculateGroundVelocity(velocity, ref command, playerSpeed, Game.config.playerFriction, Game.config.playerAcceleration, gameTime.tickDuration);
-        //        Debug.DrawLine(predictedState.State.position, predictedState.State.position + velocity, Color.yellow,1 );
-
+        
         // Simple follow ground code so character sticks to ground when running down hill
         velocity.y = -400.0f * gameTime.tickDuration;
         
-        //        Debug.DrawLine(predictedState.State.position, predictedState.State.position + velocity, Color.green, 1 );
-
         deltaPos = velocity * gameTime.tickDuration;
     }
 

@@ -349,6 +349,7 @@ public class Game : MonoBehaviour
     private void RegisterConsoleCommands() {
         Console.AddCommand("serve", CmdServe, "Start server listening", this.GetHashCode());
         Console.AddCommand("client", CmdClient, "client: Enter client mode.", this.GetHashCode());
+        Console.AddCommand("preview", CmdPreview, "Start preview mode");
         Console.AddCommand("boot", CmdBoot, "Go back to boot loop", this.GetHashCode());
 
         Console.AddCommand("quit", CmdQuit, "Quits", this.GetHashCode());
@@ -360,6 +361,10 @@ public class Game : MonoBehaviour
 
     private void CmdServe(string[] args) {
         RequestGameLoop(typeof(ServerGameLoop), args);
+    }
+
+    void CmdPreview(string[] args) {
+        RequestGameLoop(typeof(PreviewGameLoop), args);
     }
 
     void CmdBoot(string[] args) {

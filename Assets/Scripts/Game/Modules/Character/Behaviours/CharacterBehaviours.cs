@@ -12,12 +12,14 @@
 
     public static void CreateAbilityRequestSystems(GameWorld world, SystemCollection systems) {
         systems.Add(world.GetECSWorld().CreateSystem<Movement_RequestActive>(world));
+        systems.Add(world.GetECSWorld().CreateSystem<Boost_RequestActive>(world));
 
         // Update main abilities
         systems.Add(world.GetECSWorld().CreateSystem<DefaultBehaviourController_Update>(world));
     }
 
     public static void CreateMovementStartSystems(GameWorld world, SystemCollection systems) {
+        systems.Add(world.GetECSWorld().CreateSystem<Boost_Update>(world));
         systems.Add(world.GetECSWorld().CreateSystem<GroundTest>(world));
         systems.Add(world.GetECSWorld().CreateSystem<Movement_Update>(world));
     }

@@ -40,9 +40,11 @@ public class GameWorld
     public int lastServerTick;
 
     public float frameDuration;
+    public double nextTickTime = 0;
 
     public GameWorld(string name) {
         WorldTime.tickRate = 60;
+        nextTickTime = Game.frameTime;
 
         m_ECSWorld = World.DefaultGameObjectInjectionWorld;
 
