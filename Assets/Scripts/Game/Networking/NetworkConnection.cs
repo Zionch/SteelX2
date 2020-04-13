@@ -249,7 +249,7 @@ public class NetworkConnection<TPackageInfo, TCounters> where TPackageInfo : Pac
         m_PackageBuffer[0] |= (byte)message;
     }
 
-    public void CompleteSendPackage(TPackageInfo info, ref BitOutputStream output) {
+    protected int CompleteSendPackage(TPackageInfo info, ref BitOutputStream output) {
         info.SentTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
         info.Content = (NetworkMessage)m_PackageBuffer[0];
         int packageSize = output.Flush();
@@ -262,6 +262,8 @@ public class NetworkConnection<TPackageInfo, TCounters> where TPackageInfo : Pac
 
         counters.packagesOut++;
         ++outSequence;
+
+        return packageSize;
     }
 
     protected virtual void NotifyDelivered(int sequence, TPackageInfo info, bool madeIt) {

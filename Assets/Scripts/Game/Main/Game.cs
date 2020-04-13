@@ -139,7 +139,8 @@ public class Game : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        ConfigVar.Init();  
+        ConfigVar.Init();
+        Application.targetFrameRate = -1;//default is to have no frame caps
 
         var commandLineArgs = new List<string>(System.Environment.GetCommandLineArgs());
 #if UNITY_STANDALONE_LINUX || UNITY_SERVER
@@ -149,6 +150,7 @@ public class Game : MonoBehaviour
         QualitySettings.vSyncCount = 0;//need to make the target frame rate work even in headless mode
 #endif
         InitConsole(IsHeadless, commandLineArgs);
+
         Application.targetFrameRate = 60;
 
         RegisterConsoleCommands();

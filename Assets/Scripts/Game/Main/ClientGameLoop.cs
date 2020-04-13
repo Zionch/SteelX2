@@ -280,6 +280,11 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
         Playing,
         Leaving,
     }
+    // Client vars
+    [ConfigVar(Name = "client.updaterate", DefaultValue = "30000", Description = "Max bytes/sec client wants to receive", Flags = ConfigVar.Flags.ClientInfo)]
+    public static ConfigVar clientUpdateRate;
+    [ConfigVar(Name = "client.updateinterval", DefaultValue = "3", Description = "Snapshot sendrate requested by client", Flags = ConfigVar.Flags.ClientInfo)]
+    public static ConfigVar clientUpdateInterval;
 
     private GameWorld _gameWorld;
     private NetworkClient _networkClient;
@@ -298,6 +303,8 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
         _gameWorld = new GameWorld("ClientWorld");
         _networkClient = new NetworkClient(new ClientPhotonNetworkTransport());
         _networkStatisticsClient = new NetworkStatisticsClient(_networkClient);
+
+        _networkClient.UpdateClientConfig();
 
         _stateMachine.SwitchTo(ClientState.Connecting);
 
@@ -366,6 +373,12 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
             return;
         }
 
+        // (re)send client info if any of the configvars that contain clientinfo has changed
+        if ((ConfigVar.DirtyFlags & ConfigVar.Flags.ClientInfo) == ConfigVar.Flags.ClientInfo) {
+            _networkClient.UpdateClientConfig();
+            ConfigVar.DirtyFlags &= ~ConfigVar.Flags.ClientInfo;
+        }
+
         float frameDuration = m_lastFrameTime != 0 ? (float)(Game.frameTime - m_lastFrameTime) : 0;
         m_lastFrameTime = Game.frameTime;
 
@@ -395,7 +408,6 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
         _networkClient.Update(this, _clientGameWorld?.GetSnapshotConsumer());
 
         _networkClient.SendData();
-        _networkStatisticsClient.Update();
 
         if (_clientGameWorld != null)
             _networkStatisticsClient.Update();

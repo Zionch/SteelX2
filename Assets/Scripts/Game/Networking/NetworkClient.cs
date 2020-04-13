@@ -119,6 +119,17 @@ public class NetworkClient
         _clientConfig = new ClientConfig();
     }
 
+    internal void UpdateClientConfig() {
+        Profiler.BeginSample("NetworkClient.UpdateClientConfig");
+
+        _clientConfig.serverUpdateRate = ClientGameLoop.clientUpdateRate.IntValue;
+        _clientConfig.serverUpdateInterval = ClientGameLoop.clientUpdateInterval.IntValue;
+        if (clientConnection != null)
+            clientConnection.ClientConfigChanged();
+
+        Profiler.EndSample();
+    }
+
     public void Disconnect() {
         _transport.Disconnect();
     }
@@ -213,6 +224,10 @@ public class NetworkClient
             spawns.Clear();
             despawns.Clear();
             updates.Clear();
+        }
+
+        public void ClientConfigChanged() {
+            sendClientConfig = true;
         }
 
         unsafe public void ProcessMapUpdate(INetworkClientCallbacks loop) {
@@ -623,6 +638,9 @@ public class NetworkClient
             var output = default(RawOutputStream);
             output.Initialize(m_PackageBuffer, endOfHeaderPos);
 
+            if (sendClientConfig)
+                WriteClientConfig(ref output);
+
             if (commandSequence > 0) {
                 lastSentCommandSeq = commandSequence;
                 WriteCommands(info, ref output);
@@ -647,6 +665,18 @@ public class NetworkClient
                 var writer = new NetworkWriter(buf, info.data.Length, commandSchema, generateSchema);
                 generator(ref writer);
                 writer.Flush();
+            }
+        }
+
+        void WriteClientConfig(ref RawOutputStream output) {
+            AddMessageContentFlag(NetworkMessage.ClientConfig);
+
+            output.WriteRawBits((uint)_clientConfig.serverUpdateRate, 32);
+            output.WriteRawBits((uint)_clientConfig.serverUpdateInterval, 16);
+            sendClientConfig = false;
+
+            if (clientDebug.IntValue > 0) {
+                GameDebug.Log(string.Format("WriteClientConfig: serverUpdateRate {0}    serverUpdateInterval {1}", _clientConfig.serverUpdateRate, _clientConfig.serverUpdateInterval));
             }
         }
 
@@ -691,9 +721,9 @@ public class NetworkClient
                     lastAcknowlegdedCommandTime = info.commandTime;
                 }
             } else {
-                // Resend user config if the package was lost
-                //if ((info.content & NetworkMessage.ClientConfig) != 0)
-                //    sendClientConfig = true;
+                //Resend user config if the package was lost
+                if ((info.Content & NetworkMessage.ClientConfig) != 0)
+                    sendClientConfig = true;
             }
         }
 
@@ -710,6 +740,8 @@ public class NetworkClient
         {
             public int serverTime;
         }
+
+        bool sendClientConfig = true;
 
         SequenceBuffer<SnapshotInfo> snapshots = new SequenceBuffer<SnapshotInfo>(NetworkConfig.snapshotDeltaCacheSize, () => new SnapshotInfo());
         Dictionary<ushort, EntityTypeInfo> entityTypes = new Dictionary<ushort, EntityTypeInfo>();

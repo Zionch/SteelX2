@@ -451,8 +451,17 @@ unsafe public class NetworkServer
 
     public class ServerConnection : NetworkConnection<ServerPackageInfo, NetworkServer.Counters>
     {
+        public void SetSnapshotInterval(int _snapshotInterval) {
+            if (_snapshotInterval < 1)
+                _snapshotInterval = 1;
+            snapshotInterval = _snapshotInterval;
+        }
+
         public ServerConnection(NetworkServer server, int connectionId, INetworkTransport transport) : base(connectionId, transport) {
             _server = server;
+            snapshotInterval = 1;
+            maxBPS = 0;
+            nextOutPackageTime = 0;
         }
 
         unsafe public void ProcessCommands(int maxTime, IClientCommandProcessor processor) {
@@ -500,8 +509,8 @@ unsafe public class NetworkServer
 
             var input = new RawInputStream(packageBuffer, headerSize);
 
-            //if ((content & NetworkMessage.ClientConfig) != 0)
-            //    ReadClientConfig(ref input);
+            if ((content & NetworkMessage.ClientConfig) != 0)
+                ReadClientConfig(ref input);
 
             if ((content & NetworkMessage.Commands) != 0)
                 ReadCommands(ref input);
@@ -510,9 +519,15 @@ unsafe public class NetworkServer
                 ReadEvents(ref input, loop);
         }
 
-        //public void ReadClientConfig(ref BitInputStream inpuf) {
+        void ReadClientConfig(ref RawInputStream input){
+            maxBPS = (int)input.ReadRawBits(32);
+            var snapshotInterval = (int)input.ReadRawBits(16);
+            SetSnapshotInterval(snapshotInterval);
 
-        //}
+            if (serverDebug.IntValue > 0) {
+                GameDebug.Log(string.Format("ReadClientConfig: updateRate: {0}  snapshotRate: {1}", maxBPS, snapshotInterval));
+            }
+        }
 
         void ReadCommands(ref RawInputStream input){
             counters.commandsIn++;
@@ -543,6 +558,15 @@ unsafe public class NetworkServer
 
         public void SendPackage() {
             var rawOutputStream = new BitOutputStream(m_PackageBuffer);
+
+            // Distribute clients evenly according to their with snapshotInterval > 1
+            // TODO: This kind of assumes same update interval by all ....
+            if ((_server.m_ServerSequence + ConnectionId) % snapshotInterval != 0)
+                return;
+
+            // Respect max bps rate cap
+            if (Game.frameTime < nextOutPackageTime)
+                return;
 
             ServerPackageInfo packageInfo;
             BeginSendPackage(ref rawOutputStream, out packageInfo);
@@ -575,6 +599,17 @@ unsafe public class NetworkServer
 
             int compressedSize = output.Flush();
             rawOutputStream.SkipBytes(compressedSize);
+
+            var messageSize = CompleteSendPackage(packageInfo, ref rawOutputStream);
+
+            // Decide when next package can go out
+            if (maxBPS > 0) {
+                double timeLimitBPS = messageSize / maxBPS;
+                if (timeLimitBPS > (float)snapshotInterval / Game.serverTickRate.FloatValue) {
+                    GameDebug.Log("SERVER: Choked by BPS sending " + messageSize);
+                    nextOutPackageTime = Game.frameTime + timeLimitBPS;
+                }
+            }
 
             CompleteSendPackage(packageInfo, ref rawOutputStream);
         }
@@ -954,6 +989,9 @@ unsafe public class NetworkServer
         int maxSnapshotTime;
         private int snapshotPackageBaseline;
         private int snapshotServerLastWritten;
+        int snapshotInterval;
+        double nextOutPackageTime;
+        int maxBPS;
 
         CommandInfo defaultCommandInfo = new CommandInfo();
         int commandSequenceIn;

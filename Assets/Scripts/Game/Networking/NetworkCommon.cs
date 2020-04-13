@@ -43,8 +43,8 @@ public static class NetworkConfig
     public static ConfigVar netDebug;
 
     public const string TestRoomName = "_test";
-    public const int PhotonSendRate = 30;
-    public const int PhotonSerializeRate = 30;
+    public const int PhotonSendRate = 60;
+    public const int PhotonSerializeRate = 60;
 
     public const int maxFixedSchemaIds = 2;
     public const int maxEventTypeSchemaIds = 8;

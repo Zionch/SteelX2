@@ -16,12 +16,9 @@ public struct MechSettings : IReplicatedComponent
     public int Weapon2R;
 
     public void Serialize(ref SerializeContext context, ref NetworkWriter writer) {
-        GameDebug.LogWarning("Mechsettings serialization not implemented");
     }
 
     public void Deserialize(ref SerializeContext context, ref NetworkReader reader) {
-        GameDebug.LogWarning("Mechsettings serialization not implemented");
-        //heroTypeIndex = reader.ReadInt16();
     }
 }
 
