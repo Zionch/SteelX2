@@ -22,3 +22,8 @@ MonoBehaviour:
     canRunWith: []
     canInterruptAll: 0
     canInterrupt: []
+  - factory: {fileID: 11400000, guid: 1ef9073defc78d046bba9200dbb1f339, type: 2}
+    canRunWith:
+    - {fileID: 11400000, guid: f358e95e45169d546afe54ac7f482fae, type: 2}
+    canInterruptAll: 0
+    canInterrupt: []
