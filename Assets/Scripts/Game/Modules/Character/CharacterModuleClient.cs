@@ -73,7 +73,7 @@ class CharacterModuleClient : CharacterModuleShared
         // Interpolation        
 
         m_UpdateCharPresentationState = m_world.GetECSWorld().CreateSystem<UpdateCharPresentationState>(m_world);
-        //m_ApplyPresentationState = m_world.GetECSWorld().CreateManager<ApplyPresentationState>(m_world);
+        m_ApplyPresentationState = m_world.GetECSWorld().CreateSystem<ApplyPresentationState>(m_world);
         //m_CharacterLateUpdate = m_world.GetECSWorld().CreateManager<CharacterLateUpdate>(m_world);
 
         m_UpdatePresentationRootTransform = m_world.GetECSWorld().CreateSystem<UpdatePresentationRootTransform>(m_world);
@@ -105,7 +105,7 @@ class CharacterModuleClient : CharacterModuleShared
         ////        m_world.GetECSWorld().DestroyManager(m_InterpolatePresentationState);
         m_world.GetECSWorld().DestroySystem(m_UpdateCharPresentationState);
 
-        //m_world.GetECSWorld().DestroyManager(m_ApplyPresentationState);
+        m_world.GetECSWorld().DestroySystem(m_ApplyPresentationState);
 
         //m_world.GetECSWorld().DestroyManager(m_CharacterLateUpdate);
 
@@ -130,7 +130,7 @@ class CharacterModuleClient : CharacterModuleShared
 
     public void UpdatePresentation() {
         m_UpdateCharPresentationState.Update();
-        //m_ApplyPresentationState.Update();
+        m_ApplyPresentationState.Update();
     }
 
     public void LateUpdate() {
@@ -160,7 +160,7 @@ class CharacterModuleClient : CharacterModuleShared
 
     ////    readonly InterpolatePresentationState m_InterpolatePresentationState;
     readonly UpdateCharPresentationState m_UpdateCharPresentationState;
-    //readonly ApplyPresentationState m_ApplyPresentationState;
+    readonly ApplyPresentationState m_ApplyPresentationState;
 
     //readonly CharacterLateUpdate m_CharacterLateUpdate;
 

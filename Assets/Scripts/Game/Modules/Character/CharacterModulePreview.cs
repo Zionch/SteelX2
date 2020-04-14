@@ -31,6 +31,7 @@ public class CharacterModulePreview : CharacterModuleShared
         //CharacterBehaviours.CreateAbilityResolveSystems(m_world, m_AbilityResolveSystems);
 
         m_UpdateCharPresentationState = m_world.GetECSWorld().CreateSystem<UpdateCharPresentationState>(m_world);
+        m_ApplyPresentationState = m_world.GetECSWorld().CreateSystem<ApplyPresentationState>(m_world);
         m_characterCameraSystem = m_world.GetECSWorld().CreateSystem<UpdateCharacterCamera>(m_world);
 
         m_UpdatePresentationRootTransform = m_world.GetECSWorld().CreateSystem<UpdatePresentationRootTransform>(m_world);
@@ -56,6 +57,7 @@ public class CharacterModulePreview : CharacterModuleShared
         m_world.GetECSWorld().DestroySystem(m_characterCameraSystem);
 
         m_world.GetECSWorld().DestroySystem(m_UpdatePresentationRootTransform);
+        m_world.GetECSWorld().DestroySystem(m_ApplyPresentationState);
 
         Console.RemoveCommandsWithTag(GetHashCode());
     }
@@ -71,6 +73,7 @@ public class CharacterModulePreview : CharacterModuleShared
 
     public void UpdatePresentation() {
         m_UpdateCharPresentationState.Update();
+        m_ApplyPresentationState.Update();
     }
 
     public void LateUpdate() {
@@ -93,6 +96,7 @@ public class CharacterModulePreview : CharacterModuleShared
 
 
     readonly UpdateCharPresentationState m_UpdateCharPresentationState;
+    readonly ApplyPresentationState m_ApplyPresentationState;
 
     readonly UpdateCharacterCamera m_characterCameraSystem;
 

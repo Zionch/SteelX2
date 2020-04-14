@@ -517,6 +517,7 @@ GameObject:
   - component: {fileID: 448862}
   - component: {fileID: 9528370}
   - component: {fileID: 2704446047654210832}
+  - component: {fileID: -5114437592078485966}
   - component: {fileID: 5282488056999784730}
   - component: {fileID: 153263647092684480}
   m_Layer: 8
@@ -556,8 +557,8 @@ Animator:
   m_GameObject: {fileID: 167174}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: ae3528bf134e9d349baf09683836d2f8, type: 3}
-  m_Controller: {fileID: 9100000, guid: d5ef38c1143364a358f4df7b42b2979f, type: 2}
-  m_CullingMode: 1
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
@@ -577,6 +578,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bf10cdea1344482e91a4f2b58506b77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-5114437592078485966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 167174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26208a3562668314ab7d2357257723f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fireAnimationEvents: 1
+  animStateDefinition: {fileID: 11400000, guid: fd60da74444df574da9779cf2fd75afd,
+    type: 2}
 --- !u!114 &5282488056999784730
 MonoBehaviour:
   m_ObjectHideFlags: 0

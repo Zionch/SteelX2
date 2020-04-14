@@ -231,8 +231,8 @@ public class UpdateCharPresentationState : BaseComponentSystem
 
             // TODO perhaps we should not call presentation, but make system that updates presentation (and reads anim state) 
             // Update presentationstate animstatecontroller
-            //var animStateCtrl = EntityManager.GetComponentObject<AnimStateController>(character.presentation);
-            //animStateCtrl.UpdatePresentationState(m_world.WorldTime, deltaTime);
+            var animStateCtrl = EntityManager.GetComponentObject<AnimStateController>(character.presentation);
+            animStateCtrl.UpdatePresentationState(m_world.WorldTime, deltaTime);
 
             if (charPredictedState.locoState == CharacterPredictedData.LocoState.GroundMove) {
                 animState = EntityManager.GetComponentData<CharacterInterpolatedData>(entity);
@@ -309,33 +309,33 @@ public class GroundTest : BaseComponentSystem
     readonly int m_mask;
 }
 
-//[DisableAutoCreation]
-//public class ApplyPresentationState : BaseComponentSystem
-//{
-//    ComponentGroup CharGroup;
+[DisableAutoCreation]
+public class ApplyPresentationState : BaseComponentSystem
+{
+    EntityQuery CharGroup;
 
-//    public ApplyPresentationState(GameWorld world) : base(world) { }
+    public ApplyPresentationState(GameWorld world) : base(world) { }
 
-//    protected override void OnCreateManager() {
-//        base.OnCreateManager();
-//        CharGroup = GetComponentGroup(typeof(AnimStateController), typeof(CharacterPresentationSetup), ComponentType.Subtractive<DespawningEntity>());
-//    }
+    protected override void OnCreate() {
+        base.OnCreate();
+        CharGroup = GetEntityQuery(typeof(AnimStateController), typeof(MechPresentationSetup), ComponentType.Exclude<DespawningEntity>());
+    }
 
-//    protected override void OnUpdate() {
-//        var deltaTime = m_world.frameDuration;
-//        var animStateCtrlArray = CharGroup.GetComponentArray<AnimStateController>();
+    protected override void OnUpdate() {
+        var deltaTime = m_world.frameDuration;
+        var animStateCtrlArray = CharGroup.ToComponentArray<AnimStateController>();
 
-//        Profiler.BeginSample("CharacterSystemShared.ApplyPresentationState");
+        Profiler.BeginSample("CharacterSystemShared.ApplyPresentationState");
 
-//        for (var i = 0; i < animStateCtrlArray.Length; i++) {
-//            var animStateCtrl = animStateCtrlArray[i];
-//            animStateCtrl.ApplyPresentationState(m_world.worldTime, deltaTime);
-//        }
+        for (var i = 0; i < animStateCtrlArray.Length; i++) {
+            var animStateCtrl = animStateCtrlArray[i];
+            animStateCtrl.ApplyPresentationState(m_world.WorldTime, deltaTime);
+        }
 
-//        Profiler.EndSample();
-//    }
+        Profiler.EndSample();
+    }
 
-//}
+}
 
 
 
