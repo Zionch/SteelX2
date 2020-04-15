@@ -15,6 +15,7 @@ public class AnimGraph_StateSelector : AnimGraphAsset
         Stand,
         Run,
         Jump,
+        InAir,
         NumStates
     }
 
@@ -187,8 +188,8 @@ public class AnimGraph_StateSelector : AnimGraphAsset
                 return CharacterAnimationState.Run;
                 case CharacterPredictedData.LocoState.Jump:
                 return CharacterAnimationState.Jump;
-                //case CharacterPredictedData.LocoState.InAir:
-                //return CharacterAnimationState.InAir;
+                case CharacterPredictedData.LocoState.InAir:
+                return CharacterAnimationState.InAir;
             }
 
             return CharacterAnimationState.Stand;

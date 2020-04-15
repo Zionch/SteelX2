@@ -43,7 +43,7 @@ public class Ability_Boost : CharBehaviorFactory
         public override string ToString() {
             return "Boost.State active:" + active + " terminating:" + terminating;
         }
-#endif  
+#endif
     }
 
     public Settings settings;
@@ -74,9 +74,25 @@ class Boost_RequestActive : BaseComponentDataSystem<CharBehaviour, AbilityContro
             return;
 
         var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;
-        abilityCtrl.behaviorState = command.buttons.IsSet(UserCommand.Button.Boost) ?
-            AbilityControl.State.RequestActive : AbilityControl.State.Idle;
+        var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
+
+        abilityCtrl.behaviorState = AbilityControl.State.Idle;
+
+        if (charPredictedState.IsOnGround()) {
+            charPredictedState.boostingInAirCount = 0;
+
+            if (command.buttons.IsSet(UserCommand.Button.Boost)) {
+                abilityCtrl.behaviorState = AbilityControl.State.RequestActive;
+            }
+        } else if(charPredictedState.releasedJump == 1 && 
+            command.buttons.IsSet(UserCommand.Button.Jump) && charPredictedState.boostingInAirCount == 0) {
+            abilityCtrl.behaviorState = AbilityControl.State.RequestActive;
+        }
+
+        //todo : check energy
+
         EntityManager.SetComponentData(entity, abilityCtrl);
+        EntityManager.SetComponentData(charAbility.character, charPredictedState);
     }
 }
 
@@ -97,11 +113,19 @@ class Boost_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, Abil
         var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
 
         var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;
-        var boostAllowed = command.moveMagnitude > 0 && (command.moveYaw < 90.0f || command.moveYaw > 270);
-        var boostRequested = boostAllowed && command.buttons.IsSet(UserCommand.Button.Boost);
 
-        if (boostRequested && predictedState.active == 0) {
+        var boostAllowed = charPredictedState.IsOnGround() ? 
+            (command.buttons.IsSet(UserCommand.Button.Boost) && !command.buttons.IsSet(UserCommand.Button.Jump)) :
+            command.buttons.IsSet(UserCommand.Button.Jump);
+        //todo : check energy
+
+        var boostRequested = charPredictedState.IsOnGround() ? command.buttons.IsSet(UserCommand.Button.Boost) :
+            (command.buttons.IsSet(UserCommand.Button.Jump) && charPredictedState.releasedJump == 1 && charPredictedState.boostingInAirCount == 0);
+
+        if (boostRequested && boostAllowed && predictedState.active == 0) {
             abilityCtrl.behaviorState = AbilityControl.State.Active;
+            if(!charPredictedState.IsOnGround())
+                charPredictedState.boostingInAirCount = 1;
             predictedState.active = 1;
             predictedState.terminating = 0;
         }

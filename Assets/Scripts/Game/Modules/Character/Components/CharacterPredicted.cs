@@ -18,9 +18,7 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
     {
         Stand,
         GroundMove,
-        GroundBoosting,
         Jump,
-        JumpBoosting,
         InAir,
         MaxValue
     }
@@ -43,6 +41,7 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
     public Action action;
     public int actionStartTick;
     public int boostingInAirCount;
+    public int releasedJump;
     public int boosting;
 
     public CameraProfile cameraProfile;
@@ -70,6 +69,7 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
         writer.WriteInt32("phaseStartTick", locoStartTick);
         writer.WriteVector3Q("position", position, 2);
         writer.WriteInt32("boostingInAirCount", boostingInAirCount);
+        writer.WriteBoolean("releasedJumpInAir", releasedJump == 1);
         writer.WriteBoolean("boosting", boosting == 1);
         writer.WriteByte("cameraProfile", (byte)cameraProfile);
         writer.WriteInt32("damageTick", damageTick);
@@ -85,6 +85,7 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
         locoStartTick = reader.ReadInt32();
         position = reader.ReadVector3Q();
         boostingInAirCount = reader.ReadInt32();
+        releasedJump = reader.ReadBoolean() ? 1 : 0;
         boosting = reader.ReadBoolean() ? 1 : 0;
         cameraProfile = (CameraProfile)reader.ReadByte();
         damageTick = reader.ReadInt32();
@@ -92,8 +93,7 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
     }
 
     public bool IsOnGround() {
-        return locoState == CharacterPredictedData.LocoState.Stand || locoState == CharacterPredictedData.LocoState.GroundMove || 
-            locoState == CharacterPredictedData.LocoState.GroundBoosting;
+        return locoState == CharacterPredictedData.LocoState.Stand || locoState == CharacterPredictedData.LocoState.GroundMove;
     }
 
 #if UNITY_EDITOR

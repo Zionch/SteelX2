@@ -13,12 +13,13 @@ MonoBehaviour:
   m_Name: GameConfiguration
   m_EditorClassIdentifier: 
   playerSpeed: 6
-  playerBoostingSpeed: 10
+  playerGroundBoostingSpeed: 10
+  playerInAirBoostingSpeed: 4
   playerAcceleration: 30
   playerFriction: 16
-  playerAiracceleration: 1
+  playerAiracceleration: 10
   playerAirFriction: 0.5
-  playerGravity: 18
-  jumpAscentDuration: 0.3
-  jumpAscentHeight: 1.2
+  playerGravity: 27
+  jumpAscentDuration: 0.35
+  jumpAscentHeight: 1.3
   maxFallVelocity: 60

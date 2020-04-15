@@ -607,6 +607,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   RootBone: {fileID: 4342290846328821}
   BoosterBone: {fileID: 4006177756073609}
+  leftToeBone: {fileID: 0}
+  rightToeBone: {fileID: 0}
 --- !u!114 &153263647092684480
 MonoBehaviour:
   m_ObjectHideFlags: 0

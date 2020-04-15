@@ -5,7 +5,8 @@ public class GameConfiguration : ScriptableObject
 {
     [Header("Player movement")]
     public float playerSpeed = 6.0f;
-    public float playerBoostingSpeed = 6.0f;
+    public float playerGroundBoostingSpeed = 6.0f;
+    public float playerInAirBoostingSpeed = 8.0f;
     public float playerAcceleration = 30.0f;
     public float playerFriction = 6.0f;
     public float playerAiracceleration = 3.0f;

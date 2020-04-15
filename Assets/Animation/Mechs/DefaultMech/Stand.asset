@@ -15,8 +15,8 @@ MonoBehaviour:
   animIdle: {fileID: 7400000, guid: 2e818879a5b9a0f438e02a40ea1d0f3f, type: 2}
   animTurnL: {fileID: 7400000, guid: 2e818879a5b9a0f438e02a40ea1d0f3f, type: 2}
   animTurnR: {fileID: 7400000, guid: 2e818879a5b9a0f438e02a40ea1d0f3f, type: 2}
-  animTurnAngle: 30
-  aimTurnLocalThreshold: 30
+  animTurnAngle: 90
+  aimTurnLocalThreshold: 90
   aimYawAngle: 90
   turnSpeed: 120
   turnThreshold: 120

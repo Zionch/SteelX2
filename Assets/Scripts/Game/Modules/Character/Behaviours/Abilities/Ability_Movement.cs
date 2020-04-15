@@ -71,8 +71,10 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
         }
 
         // Movement is always active (unless canceled)
-        abilityCtrl.behaviorState = AbilityControl.State.Active;
-        EntityManager.SetComponentData(abilityEntity, abilityCtrl);
+        if(abilityCtrl.behaviorState != AbilityControl.State.Active) {
+            abilityCtrl.behaviorState = AbilityControl.State.Active;
+            EntityManager.SetComponentData(abilityEntity, abilityCtrl);
+        }
 
         var time = m_world.WorldTime;
 
@@ -96,15 +98,22 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             }
         }
 
-        if (command.buttons.IsSet(UserCommand.Button.Jump) && isOnGround) {
+        if (command.buttons.IsSet(UserCommand.Button.Jump) && predictedState.releasedJump == 1 && isOnGround) {
             newPhase = CharacterPredictedData.LocoState.Jump;
         }
 
         if (predictedState.locoState == CharacterPredictedData.LocoState.Jump) {
-            if (phaseDuration >= Game.config.jumpAscentDuration) {
+            if (phaseDuration >= Game.config.jumpAscentDuration && predictedState.boosting == 0) {
                 newPhase = CharacterPredictedData.LocoState.InAir;
             }
         }
+
+        if(predictedState.boostingInAirCount >= 1 && predictedState.boosting == 0) {//in air boosting ended
+            if (!isOnGround)
+                newPhase = CharacterPredictedData.LocoState.InAir;
+        }
+
+        predictedState.releasedJump = !command.buttons.IsSet(UserCommand.Button.Jump) ? 1 : 0;
 
         // Set phase start tick if phase has changed
         if (newPhase != CharacterPredictedData.LocoState.MaxValue && newPhase != predictedState.locoState) {
@@ -155,8 +164,12 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             case CharacterPredictedData.LocoState.Jump:
 
             // In jump we overwrite velocity y component with linear movement up
+            var speed = new Vector3(velocity.x, 0, velocity.z).magnitude;
+            if (speed > Game.config.playerSpeed) {
+                velocity *= Game.config.playerSpeed / speed;
+            }
             velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAiracceleration, gameTime.tickDuration);
-            velocity.y = Game.config.jumpAscentHeight / Game.config.jumpAscentDuration;
+            velocity.y = (predicted.boosting == 1) ? Game.config.playerInAirBoostingSpeed : Game.config.jumpAscentHeight / Game.config.jumpAscentDuration;
             deltaPos += velocity * gameTime.tickDuration;
 
             return;
@@ -166,15 +179,19 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             velocity += Vector3.down * gravity * gameTime.tickDuration;
             velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAiracceleration, gameTime.tickDuration);
 
-            if (velocity.y < -Game.config.maxFallVelocity)
-                velocity.y = -Game.config.maxFallVelocity;
+            if(predicted.boosting == 1) {
+                velocity.y = Game.config.playerInAirBoostingSpeed;
+            } else {
+                if (velocity.y < -Game.config.maxFallVelocity)
+                    velocity.y = -Game.config.maxFallVelocity;
+            }
 
             deltaPos = velocity * gameTime.tickDuration;
 
             return;
         }
 
-        var playerSpeed = predicted.boosting == 1 ? Game.config.playerBoostingSpeed : Game.config.playerSpeed;
+        var playerSpeed = predicted.boosting == 1 ? Game.config.playerGroundBoostingSpeed : Game.config.playerSpeed;
 
         velocity = CalculateGroundVelocity(velocity, ref command, playerSpeed, Game.config.playerFriction, Game.config.playerAcceleration, gameTime.tickDuration);
         
