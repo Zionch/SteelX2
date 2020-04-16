@@ -151,21 +151,22 @@ public class Game : MonoBehaviour
 #endif
         InitConsole(IsHeadless, commandLineArgs);
 
-        Application.targetFrameRate = 60;
+        if(IsHeadless)
+            Application.targetFrameRate = 60;
 
         RegisterConsoleCommands();
+        Console.SetOpen(true);
 
         m_StopwatchFrequency = System.Diagnostics.Stopwatch.Frequency;
         Clock = new System.Diagnostics.Stopwatch();
         Clock.Start();
 
-        Console.SetOpen(true);
-
         levelManager = new LevelManager();
         levelManager.Init();
+
         inputSystem = new InputSystem();
 
-        // TODO added Instantiate here to avoid making changes to asset file.
+        //Instantiate here to avoid making changes to asset file.
         config = Instantiate((GameConfiguration)Resources.Load("GameConfiguration"));
 
         PushCamera(bootCamera);
@@ -332,15 +333,10 @@ public class Game : MonoBehaviour
     }
 
     void SetCameraEnabled(Camera cam, bool enabled) {
-        //if (enabled)
-        //    RenderSettings.UpdateCameraSettings(cam);
-
         cam.enabled = enabled;
         var audioListener = cam.GetComponent<AudioListener>();
         if (audioListener != null) {
             audioListener.enabled = enabled;
-            //if (SoundSystem != null)
-            //    SoundSystem.SetCurrentListener(enabled ? audioListener : null);
         }
     }
 

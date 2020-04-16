@@ -33,8 +33,6 @@ public class MechTypeRegistry : RegistryBase
                 guids.Add(setup.Mech.prefabServer.GetGuidStr());
             if (!serverBuild && setup.Mech.prefabClient.IsSet())
                 guids.Add(setup.Mech.prefabClient.GetGuidStr());
-            if (!serverBuild && setup.Mech.prefab1P.IsSet())
-                guids.Add(setup.Mech.prefab1P.GetGuidStr());
         }
     }
 #endif

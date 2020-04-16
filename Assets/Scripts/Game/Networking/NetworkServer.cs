@@ -156,10 +156,9 @@ unsafe public class NetworkServer
             m_Snapshots[i].data = (uint*)UnsafeUtility.Malloc(NetworkConfig.maxWorldSnapshotDataSize, UnsafeUtility.AlignOf<UInt32>(), Unity.Collections.Allocator.Persistent);
         }
 
-        // Allocate scratch*) buffer to hold predictions. *) This is overwritten every time
+        // Allocate scratch buffer to hold predictions. This is overwritten every time
         // a snapshot is being written to a specific client
         m_Prediction = (uint*)UnsafeUtility.Malloc(NetworkConfig.maxWorldSnapshotDataSize, UnsafeUtility.AlignOf<UInt32>(), Unity.Collections.Allocator.Persistent);
-
     }
 
     public void Disconnect() {
@@ -192,7 +191,7 @@ unsafe public class NetworkServer
         ++m_MapInfo.mapId;
 
         // Reset map and connection state
-        //serverTime = 0;
+        serverTime = 0;
         //m_Entities.Clear();
         //m_FreeEntities.Clear();
         foreach (var pair in _serverConnections)
@@ -910,8 +909,8 @@ unsafe public class NetworkServer
                     GameDebug.Log("tick: " + _server.m_ServerSequence);
                     GameDebug.Log("id: " + id);
                     GameDebug.Log("snapshots: " + entity.snapshots.ToString());
-                    //GameDebug.Log("WOULD HAVE crashed looking for " + tickToSend + " changing to " + (entity.despawnSequence - 1));
-                    //tickToSend = entity.despawnSequence - 1;
+                    GameDebug.Log("WOULD HAVE crashed looking for " + tickToSend + " changing to " + (entity.despawnSequence - 1));
+                    tickToSend = entity.despawnSequence - 1;
                     GameDebug.Assert(false, "Unable to find " + tickToSend + " in snapshots. Would update have worked?");
                 }
                 var snapshotInfo = entity.snapshots[tickToSend];
@@ -919,14 +918,7 @@ unsafe public class NetworkServer
                 // NOTE : As long as the server haven't gotten the spawn acked, it will keep sending
                 // delta relative to 0 as we cannot know if we have a valid baseline on the client or not
                 uint entity_hash = 0;
-                //ar bef = output.GetBitPosition2();
                 DeltaWriter.Write(ref output, entityType.schema, snapshotInfo.start, prediction, entity.fieldsChangedPrediction, entity.GetFieldMask(ConnectionId), ref entity_hash);
-                //var aft = output.GetBitPosition2();
-                //if (serverDebug.IntValue > 0) {
-                //    entityType.stats_count++;
-                //    entityType.stats_bits += (aft - bef);
-                //}
-
             }
 
             if (!haveBaseline && serverDebug.IntValue > 0) {
@@ -938,6 +930,8 @@ unsafe public class NetworkServer
 
             snapshotSeqs[outSequence % NetworkConfig.clientAckCacheSize] = _server.m_ServerSequence;
             snapshotServerLastWritten = _server.m_ServerSequence;
+
+            Profiler.EndSample();
         }
 
         protected override void NotifyDelivered(int sequence, ServerPackageInfo info, bool madeIt) {
@@ -970,8 +964,6 @@ unsafe public class NetworkServer
                     }
                 }
             }
-
-            Profiler.EndSample();
         }
 
         public void Reset() {

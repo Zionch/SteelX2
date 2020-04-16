@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class ClientGameWorld{
     
@@ -111,8 +110,6 @@ public class ClientGameWorld{
         // Sample input into current command
         //  The time passed in here is used to calculate the amount of rotation from stick position
         //  The command stores final view direction
-        //bool chatOpen = Game.game.clientFrontend != null && Game.game.clientFrontend.chatPanel.isOpen;
-        //bool userInputEnabled = Game.GetMousePointerLock() && !chatOpen;
         bool userInputEnabled = Game.GetMousePointerLock();
 
         m_PlayerModule.SampleInput(userInputEnabled, Time.deltaTime, m_RenderTime.tick);
@@ -300,7 +297,6 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
         _stateMachine.Add(ClientState.Playing, EnterPlayingState, UpdatePlayingState, null);
         _stateMachine.Add(ClientState.Leaving, EnterLeavingState, UpdateLeavingState, null);
 
-        _gameWorld = new GameWorld("ClientWorld");
         _networkClient = new NetworkClient(new ClientPhotonNetworkTransport());
         _networkStatisticsClient = new NetworkStatisticsClient(_networkClient);
 
@@ -353,7 +349,9 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
     }
 
     private void EnterPlayingState() {
-        //GameDebug.Assert(m_clientWorld == null && Game.game.levelManager.IsCurrentLevelLoaded());
+        GameDebug.Assert(_gameWorld == null && Game.Instance.levelManager.IsCurrentLevelLoaded());
+
+        _gameWorld = new GameWorld("ClientWorld");
 
         _gameWorld.RegisterSceneEntities();
 
@@ -397,11 +395,9 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
     }
 
     private void EnterLeavingState() {
-
     }
 
     private void UpdateLeavingState() {
-
     }
 
     public void Update() {

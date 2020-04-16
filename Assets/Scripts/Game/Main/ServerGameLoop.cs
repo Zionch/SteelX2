@@ -355,18 +355,6 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
                 _networkServer.MapReady(clientId); // TODO hacky
                 client.isReady = true;
                 break;
-                //case GameNetworkEvents.EventType.PlayerSetup:
-                //client.playerSettings.Deserialize(ref reader);
-                //if (client.player != null)
-                //    _serverGameWorld.HandlePlayerSetupEvent(client.player, client.playerSettings);
-                //break;
-
-                //case GameNetworkEvents.EventType.RemoteConsoleCmd:
-                //HandleClientCommand(client, reader.ReadString());
-                //break;
-                //case GameNetworkEvents.EventType.Chat:
-                //m_ChatSystem.ReceiveMessage(client, reader.ReadString(256));
-                //break;
             }
         }
     }

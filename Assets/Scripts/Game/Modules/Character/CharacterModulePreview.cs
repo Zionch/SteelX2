@@ -12,10 +12,6 @@ public class CharacterModulePreview : CharacterModuleShared
         m_HandleCharacterSpawnRequests = m_world.GetECSWorld().CreateSystem<HandleCharacterSpawnRequests>(m_world, resourceSystem, false);
         m_HandleCharacterDepawnRequests = m_world.GetECSWorld().CreateSystem<HandleCharacterDespawnRequests>(m_world);
 
-        // Handle control change        
-        //m_ControlledEntityChangedSystems.Add(m_world.GetECSWorld().CreateManager<PlayerCharacterControlSystem>(m_world));
-        //m_ControlledEntityChangedSystems.Add(m_world.GetECSWorld().CreateManager<UpdateCharacter1PSpawn>(m_world, resourceSystem));
-
         // Handle spawning
         CharacterBehaviours.CreateHandleSpawnSystems(m_world, m_HandleSpawnSystems, resourceSystem, false);
 
@@ -35,20 +31,12 @@ public class CharacterModulePreview : CharacterModuleShared
         m_characterCameraSystem = m_world.GetECSWorld().CreateSystem<UpdateCharacterCamera>(m_world);
 
         m_UpdatePresentationRootTransform = m_world.GetECSWorld().CreateSystem<UpdatePresentationRootTransform>(m_world);
- 
-        // Preload all character resources (until we have better streaming solution)
-        //var charRegistry = resourceSystem.GetResourceRegistry<MechTypeRegistry>();
-        //for (var i = 0; i < charRegistry.entries.Count; i++) {
-        //    resourceSystem.GetSingleAssetResource(charRegistry.entries[i].prefab1P);
-        //    resourceSystem.GetSingleAssetResource(charRegistry.entries[i].prefabClient);
-        //}
 
         Console.AddCommand("thirdperson", CmdToggleThirdperson, "Toggle third person mode", this.GetHashCode());
     }
 
     public override void Shutdown() {
         base.Shutdown();
-
 
         m_world.GetECSWorld().DestroySystem(m_HandleCharacterSpawnRequests);
         m_world.GetECSWorld().DestroySystem(m_HandleCharacterDepawnRequests);
@@ -89,11 +77,8 @@ public class CharacterModulePreview : CharacterModuleShared
         m_characterCameraSystem.ToggleFOrceThirdPerson();
     }
 
-
-
     readonly HandleCharacterSpawnRequests m_HandleCharacterSpawnRequests;
     readonly HandleCharacterDespawnRequests m_HandleCharacterDepawnRequests;
-
 
     readonly UpdateCharPresentationState m_UpdateCharPresentationState;
     readonly ApplyPresentationState m_ApplyPresentationState;

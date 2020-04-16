@@ -376,7 +376,7 @@ public class NetworkClient
 
                 byte fieldMask = (byte)input.ReadRawBits(8);
 
-                // TODO (petera) need an max entity id for safety
+                // TODO need an max entity id for safety
                 while (id >= entities.Count)
                     entities.Add(new EntityInfo());
 
@@ -493,7 +493,7 @@ public class NetworkClient
                         }
                     }
 
-                    // TODO (petera) are these clears needed?
+                    // TODO are these clears needed?
                     for (int i = 0, c = info.fieldsChangedPrediction.Length; i < c; ++i)
                         info.fieldsChangedPrediction[i] = 0;
                     for (int i = 0; i < NetworkConfig.maxEntitySnapshotDataSize; i++)
@@ -621,6 +621,7 @@ public class NetworkClient
             }
 
             updates.Clear();
+            Profiler.EndSample();
         }
 
         public void SendPackage() {

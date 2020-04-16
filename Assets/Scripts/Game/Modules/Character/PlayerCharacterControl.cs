@@ -16,9 +16,11 @@ public struct MechSettings : IReplicatedComponent
     public int Weapon2R;
 
     public void Serialize(ref SerializeContext context, ref NetworkWriter writer) {
+        //todo : implement this
     }
 
     public void Deserialize(ref SerializeContext context, ref NetworkReader reader) {
+        //todo : implement this
     }
 }
 

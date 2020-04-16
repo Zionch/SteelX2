@@ -45,7 +45,7 @@ public class LevelManager
     }
 
     public bool CanLoadLevel(string name) {
-        // TODO (petera). We can't really promise you can load a level before trying.
+        // TODO We can't really promise you can load a level before trying.
         // Refactor to handle errors during load.
         var bundle = SimpleBundleManager.LoadLevelAssetBundle(name);
         return bundle != null;
@@ -63,7 +63,7 @@ public class LevelManager
         var newLevel = new Level();
         newLevel.name = name;
 
-        // TODO (petera) Use async? Seem to be not needed here.
+        // TODO Use async? Seem to be not needed here.
         var bundle = SimpleBundleManager.LoadLevelAssetBundle(name);
         if (bundle == null) {
             GameDebug.Log("Could not load asset bundle for scene " + name);
@@ -80,7 +80,7 @@ public class LevelManager
         }
 
         // If there is a main scene, load that first
-        // TODO (petera) switch to LevelInfo based layers
+        // TODO switch to LevelInfo based layers
         var mainScenePath = scenePaths.Find(x => x.ToLower().EndsWith("_main.unity"));
         var useLayers = true;
         if (mainScenePath == null) {
@@ -157,7 +157,7 @@ public class LevelManager
     }
 
 
-    // TODO (petera) this code was moved here to make it available outside of editor - until we start cooking for client/server
+    // TODO this code was moved here to make it available outside of editor - until we start cooking for client/server
     public enum BuildType
     {
         Default,

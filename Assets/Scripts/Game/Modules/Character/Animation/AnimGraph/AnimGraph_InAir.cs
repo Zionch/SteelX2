@@ -98,7 +98,6 @@ public class AnimGraph_InAir : AnimGraphAsset
 
 
             var landAnticWeight = animState.landAnticWeight;
-            GameDebug.Log("landantic weight :" + landAnticWeight);
             m_mainMixer.SetInputWeight(inAirPort, 1.0f - landAnticWeight);
             m_mainMixer.SetInputWeight(landAnticPort, landAnticWeight);
 

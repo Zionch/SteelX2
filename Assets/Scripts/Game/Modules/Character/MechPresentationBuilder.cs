@@ -168,15 +168,12 @@ public class MechPresentationBuilder
     //        string[] parts = new string[9] { c, a, l, h, b, w1l, w1r, w2l, w2r };
 
 
-
     //        LoadAllPartInfo();
 
     //        buildSkills(skill_IDs);
 
     //        //BuildWeapons(mechBones, new string[4] { parts[5], parts[6], parts[7], parts[8] });
     //    }
-
-
 
     //    public void ReplaceMechPart(string toReplace, string newPart) {
     //        Part p = MechPartManager.FindData(newPart);

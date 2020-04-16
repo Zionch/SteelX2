@@ -104,6 +104,7 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
                && locoStartTick == state.locoStartTick
                && action == state.action
                && actionStartTick == state.actionStartTick
+               && releasedJump == state.releasedJump
                && boostingInAirCount == state.boostingInAirCount
                && boosting == state.boosting
                && damageTick == state.damageTick;

@@ -26,8 +26,6 @@ public abstract class CharacterModuleShared
 {
     protected GameWorld m_world;
 
-    //protected SystemCollection m_ControlledEntityChangedSystems = new SystemCollection();
-
     protected SystemCollection m_HandleSpawnSystems = new SystemCollection();
     protected SystemCollection m_HandleDespawnSystems = new SystemCollection();
 
@@ -43,7 +41,6 @@ public abstract class CharacterModuleShared
     }
 
     public virtual void Shutdown() {
-        //m_ControlledEntityChangedSystems.Shutdown(m_world.GetECSWorld());
         m_HandleSpawnSystems.Shutdown(m_world.GetECSWorld());
         m_HandleDespawnSystems.Shutdown(m_world.GetECSWorld());
         m_AbilityRequestUpdateSystems.Shutdown(m_world.GetECSWorld());
@@ -60,10 +57,6 @@ public abstract class CharacterModuleShared
     public void HandleDespawns() {
         m_HandleDespawnSystems.Update();
     }
-
-    //public void HandleControlledEntityChanged() {
-    //    m_ControlledEntityChangedSystems.Update();
-    //}
 
     public void AbilityRequestUpdate() {
         m_AbilityRequestUpdateSystems.Update();

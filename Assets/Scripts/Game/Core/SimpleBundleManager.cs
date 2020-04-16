@@ -39,7 +39,7 @@ public class SimpleBundleManager
     }
 
     public static void ReleaseLevelAssetBundle(string name) {
-        // TODO (petera) : Implement unloading of asset bundles. Ideally not by name.
+        // TODO: Implement unloading of asset bundles. Ideally not by name.
     }
 
     static Dictionary<string, AssetBundle> m_levelBundles = new Dictionary<string, AssetBundle>();

@@ -2,7 +2,7 @@
 {
     public enum Type
     {
-        Data = 10,
+        Data = 10,//10: to avoid photon's internal events
         Connect,
         Disconnect
     }
@@ -42,9 +42,14 @@ public static class NetworkConfig
     [ConfigVar(Name = "net.debug", DefaultValue = "0", Description = "Dump lots of debug info about network")]
     public static ConfigVar netDebug;
 
-    public const string TestRoomName = "_test";
-    public const int PhotonSendRate = 60;
-    public const int PhotonSerializeRate = 60;
+    [ConfigVar(Name = "testroom", DefaultValue = "_test", Description = "Room name for testing", Flags = ConfigVar.Flags.Save)]
+    public static ConfigVar TestRoomName;
+
+    [ConfigVar(Name = "photon.sendrate", DefaultValue = "60", Description = "Send rate for photon transport", Flags = ConfigVar.Flags.ServerInfo)]
+    public static ConfigVar PhotonSendRate;
+
+    [ConfigVar(Name = "photon.serializerate", DefaultValue = "60", Description = "Serialize rate for photon transport", Flags = ConfigVar.Flags.ServerInfo)]
+    public static ConfigVar PhotonSerializeRate;
 
     public const int maxFixedSchemaIds = 2;
     public const int maxEventTypeSchemaIds = 8;
@@ -68,7 +73,6 @@ public static class NetworkConfig
     // from clients. Theoretically the 'right' size is snapshotDeltaCacheSize / (server.tickrate / client.updaterate)
     // e.g. 128 / (60 / 20) = 128 / 3, but since client.updaterate <= server.tickrate we use
     public const int clientAckCacheSize = snapshotDeltaCacheSize;
-
    
     public const int mapSchemaId = 1;
     public const int networkClientQueueCommandSchemaId = 0;

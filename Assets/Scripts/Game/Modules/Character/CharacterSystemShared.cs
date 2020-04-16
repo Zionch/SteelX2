@@ -61,29 +61,10 @@ public class HandleCharacterSpawn : InitializeComponentGroupSystem<Character, Ha
             charPresentation.character = charEntity;
             character.presentations.Add(charPresentation);
 
-            // Setup health
-            //var healthState = EntityManager.GetComponentData<HealthStateData>(charEntity);
-            //healthState.SetMaxHealth(heroTypeAsset.health);
-            //EntityManager.SetComponentData(charEntity, healthState);
 
             // Setup CharacterMoveQuery
             var moveQuery = EntityManager.GetComponentObject<CharacterMoveQuery>(charEntity);
             moveQuery.Initialize(mechTypeAsset.characterMovementSettings, charEntity);
-
-            // Setup HitCollisionHistory
-            //if (EntityManager.HasComponent<HitCollisionData>(charPresentationEntity)) {
-            //    var hitCollisionData = EntityManager.GetComponentData<HitCollisionData>(charPresentationEntity);
-            //    hitCollisionData.hitCollisionOwner = charEntity;
-            //    EntityManager.SetComponentData(charPresentationEntity, hitCollisionData);
-            //} else {
-            //    var hitCollisionData = new HitCollisionData {
-            //        hitCollisionOwner = charEntity,
-            //    };
-            //    EntityManager.AddComponentData(charPresentationEntity, hitCollisionData);
-            //}
-
-            //character.eyeHeight = heroTypeAsset.eyeHeight;
-
 
             // Setup abilities
             GameDebug.Assert(EntityManager.Exists(characterRepAll.abilityCollection), "behavior controller entity does not exist");
@@ -96,22 +77,6 @@ public class HandleCharacterSpawn : InitializeComponentGroupSystem<Character, Ha
                     EntityManager.SetComponentData(childEntity, charBehaviour);
                 }
             }
-
-            // Create items
-            //foreach (var itemEntry in heroTypeAsset.items) {
-            //    var itemPrefabGuid = server ? itemEntry.itemType.prefabServer : itemEntry.itemType.prefabClient;
-
-            //    if (!itemPrefabGuid.IsSet())
-            //        continue;
-
-            //    var itemPrefab = m_resourceManager.GetSingleAssetResource(itemPrefabGuid) as GameObject;
-            //    var itemGOE = m_world.Spawn<GameObjectEntity>(itemPrefab);
-
-            //    var itemCharPresentation = EntityManager.GetComponentObject<CharacterPresentationSetup>(itemGOE.Entity);
-            //    itemCharPresentation.character = charEntity;
-            //    itemCharPresentation.attachToPresentation = charPresentationEntity;
-            //    character.presentations.Add(itemCharPresentation);
-            //}
         }
     }
 
@@ -128,10 +93,10 @@ public class HandleCharacterDespawn : DeinitializeComponentSystem<Character>
     public HandleCharacterDespawn(GameWorld gameWorld) : base(gameWorld) { }
 
     protected override void Deinitialize(Entity entity, Character character) {
-        //var charEntity = character.GetComponent<GameObjectEntity>().Entity;
+        var charEntity = character.GetComponent<GameObjectEntity>().Entity;
 
-        //var moveQuery = EntityManager.GetComponentObject<CharacterMoveQuery>(charEntity);
-        //moveQuery.Shutdown();
+        var moveQuery = EntityManager.GetComponentObject<CharacterMoveQuery>(charEntity);
+        moveQuery.Shutdown();
 
         // Remove presentations
         foreach (var charPresentation in character.presentations) {
@@ -139,30 +104,6 @@ public class HandleCharacterDespawn : DeinitializeComponentSystem<Character>
         }
     }
 }
-
-
-//[DisableAutoCreation]
-//public class UpdateTeleportation : BaseComponentSystem<Character>
-//{
-//    public UpdateTeleportation(GameWorld gameWorld) : base(gameWorld) { }
-
-//    protected override void Update(Entity entity, Character character) {
-//        if (character.m_TeleportPending) {
-//            character.m_TeleportPending = false;
-
-//            var predictedState = EntityManager.GetComponentData<CharacterPredictedData>(entity);
-//            predictedState.position = character.m_TeleportToPosition;
-//            predictedState.velocity = character.m_TeleportToRotation * Vector3.forward * predictedState.velocity.magnitude;
-//            EntityManager.SetComponentData(entity, predictedState);
-
-//            //            character.transform.position = character.m_TeleportToPosition;
-
-//            var userCommandComponent = EntityManager.GetComponentData<UserCommandComponentData>(entity);
-//            userCommandComponent.ResetCommand(m_world.worldTime.tick, character.m_TeleportToRotation.eulerAngles.y, 90);
-//            EntityManager.SetComponentData(entity, userCommandComponent);
-//        }
-//    }
-//}
 
 [DisableAutoCreation]
 public class UpdateCharPresentationState : BaseComponentSystem

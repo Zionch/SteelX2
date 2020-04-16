@@ -9,8 +9,8 @@ public abstract class PhotonNetworkTransport : INetworkTransport, IConnectionCal
     public PhotonNetworkTransport() {
         PhotonNetwork.AddCallbackTarget(this);
 
-        PhotonNetwork.SendRate = NetworkConfig.PhotonSendRate;
-        PhotonNetwork.SerializationRate = NetworkConfig.PhotonSerializeRate;
+        PhotonNetwork.SendRate = NetworkConfig.PhotonSendRate.IntValue;
+        PhotonNetwork.SerializationRate = NetworkConfig.PhotonSerializeRate.IntValue;
     }
 
     //client wait server to send a connect event to him, so client won't send anything if server isn't joined
@@ -70,7 +70,7 @@ public abstract class PhotonNetworkTransport : INetworkTransport, IConnectionCal
 
         //this is for starting game directly , not through lobby->room
         if (!PhotonNetwork.InRoom) {
-            PhotonNetwork.JoinOrCreateRoom(NetworkConfig.TestRoomName, new RoomOptions(), TypedLobby.Default);
+            PhotonNetwork.JoinOrCreateRoom(NetworkConfig.TestRoomName.Value, new RoomOptions(), TypedLobby.Default);
         }
     }
 

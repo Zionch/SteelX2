@@ -131,14 +131,12 @@ public class HandleCharacterSpawnRequests : BaseComponentSystem
 public class HandleCharacterDespawnRequests : BaseComponentSystem
 {
     EntityQuery DespawnGroup;
-    //    ComponentGroup ItemGroup;
 
     public HandleCharacterDespawnRequests(GameWorld world) : base(world) { }
 
     protected override void OnCreate() {
         base.OnCreate();
         DespawnGroup = GetEntityQuery(typeof(CharacterDespawnRequest));
-        //        ItemGroup = GetComponentGroup(typeof(CharacterItem));
     }
 
     protected override void OnUpdate() {
@@ -174,101 +172,12 @@ public class HandleCharacterDespawnRequests : BaseComponentSystem
     }
 }
 
-//[DisableAutoCreation]
-//public class HandleDamage : BaseComponentSystem
-//{
-//    private EntityQuery Group;
-
-//    public HandleDamage(GameWorld gameWorld) : base(gameWorld) { }
-
-//    protected override void OnCreate() {
-//        base.OnCreate();
-//        Group = GetEntityQuery(typeof(HealthStateData), typeof(HitCollisionOwnerData));
-//    }
-
-//    protected override void OnUpdate() {
-//        var entityArray = Group.GetEntityArray();
-//        var healthStateArray = Group.GetComponentDataArray<HealthStateData>();
-//        var collOwnerArray = Group.GetComponentDataArray<HitCollisionOwnerData>();
-//        for (int i = 0; i < entityArray.Length; i++) {
-//            var healthState = healthStateArray[i];
-
-//            if (healthState.health <= 0)
-//                continue;
-
-//            var entity = entityArray[i];
-//            var collOwner = collOwnerArray[i];
-
-//            var isDamaged = false;
-//            var impulseVec = Vector3.zero;
-//            var damage = 0.0f;
-//            var damageVec = Vector3.zero;
-
-
-//            // Apply hitcollider damage events
-//            var damageBuffer = EntityManager.GetBuffer<DamageEvent>(entity);
-//            for (var eventIndex = 0; eventIndex < damageBuffer.Length; eventIndex++) {
-//                isDamaged = true;
-
-//                var damageEvent = damageBuffer[eventIndex];
-
-//                //GameDebug.Log(string.Format("ApplyDamage. Target:{0} Instigator:{1} Dam:{2}", healthState.name, m_world.GetGameObjectFromEntity(damageEvent.instigator), damageEvent.damage ));
-//                healthState.ApplyDamage(ref damageEvent, m_world.worldTime.tick);
-//                EntityManager.SetComponentData(entity, healthState);
-
-//                impulseVec += damageEvent.direction * damageEvent.impulse;
-//                damageVec += damageEvent.direction * damageEvent.damage;
-//                damage += damageEvent.damage;
-
-//                //damageHistory.ApplyDamage(ref damageEvent, m_world.worldTime.tick);
-
-//                if (damageBuffer[eventIndex].instigator != Entity.Null && EntityManager.Exists(damageEvent.instigator) && EntityManager.HasComponent<DamageHistoryData>(damageEvent.instigator)) {
-//                    var instigatorDamageHistory = EntityManager.GetComponentData<DamageHistoryData>(damageEvent.instigator);
-//                    if (m_world.worldTime.tick > instigatorDamageHistory.inflictedDamage.tick) {
-//                        instigatorDamageHistory.inflictedDamage.tick = m_world.worldTime.tick;
-//                        instigatorDamageHistory.inflictedDamage.lethal = 0;
-//                    }
-//                    if (healthState.health <= 0)
-//                        instigatorDamageHistory.inflictedDamage.lethal = 1;
-
-//                    EntityManager.SetComponentData(damageEvent.instigator, instigatorDamageHistory);
-//                }
-
-//                collOwner.collisionEnabled = healthState.health > 0 ? 1 : 0;
-//                EntityManager.SetComponentData(entity, collOwner);
-//            }
-//            damageBuffer.Clear();
-
-//            if (isDamaged) {
-//                var damageImpulse = impulseVec.magnitude;
-//                var damageDir = damageImpulse > 0 ? impulseVec.normalized : damageVec.normalized;
-
-//                var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(entity);
-//                charPredictedState.damageTick = m_world.worldTime.tick;
-//                charPredictedState.damageDirection = damageDir;
-//                charPredictedState.damageImpulse = damageImpulse;
-//                EntityManager.SetComponentData(entity, charPredictedState);
-
-//                if (healthState.health <= 0) {
-//                    var ragdollState = EntityManager.GetComponentData<RagdollStateData>(entity);
-//                    ragdollState.ragdollActive = 1;
-//                    ragdollState.impulse = impulseVec;
-//                    EntityManager.SetComponentData(entity, ragdollState);
-//                }
-//            }
-//        }
-//    }
-//}
-
 public class CharacterModuleServer : CharacterModuleShared
 {
     public CharacterModuleServer(GameWorld world, BundledResourceManager resourceSystem) : base(world) {
         // Handle spawn requests
         m_HandleCharacterSpawnRequests = m_world.GetECSWorld().CreateSystem<HandleCharacterSpawnRequests>(m_world, resourceSystem, true);
         m_HandleCharacterDespawnRequests = m_world.GetECSWorld().CreateSystem<HandleCharacterDespawnRequests>(m_world);
-
-        // Handle controlled entity changed
-        //m_ControlledEntityChangedSystems.Add(m_world.GetECSWorld().CreateManager<PlayerCharacterControlSystem>(m_world));
 
         // Handle spawn
         CharacterBehaviours.CreateHandleSpawnSystems(m_world, m_HandleSpawnSystems, resourceSystem, true);
@@ -284,14 +193,10 @@ public class CharacterModuleServer : CharacterModuleShared
         CharacterBehaviours.CreateAbilityStartSystems(m_world, m_AbilityStartSystems);
         //CharacterBehaviours.CreateAbilityResolveSystems(m_world, m_AbilityResolveSystems);
 
-
         m_UpdateCharPresentationState = m_world.GetECSWorld().CreateSystem<UpdateCharPresentationState>(m_world);
         m_ApplyPresentationState = m_world.GetECSWorld().CreateSystem<ApplyPresentationState>(m_world);
 
-
-        //m_HandleDamage = m_world.GetECSWorld().CreateManager<HandleDamage>(m_world);
         m_UpdatePresentationRootTransform = m_world.GetECSWorld().CreateSystem<UpdatePresentationRootTransform>(m_world);
-        //m_UpdatePresentationAttachmentTransform = m_world.GetECSWorld().CreateManager<UpdatePresentationAttachmentTransform>(m_world);
     }
 
     public override void Shutdown() {
@@ -301,9 +206,7 @@ public class CharacterModuleServer : CharacterModuleShared
         m_world.GetECSWorld().DestroySystem(m_HandleCharacterSpawnRequests);
         m_world.GetECSWorld().DestroySystem(m_UpdateCharPresentationState);
 
-        //m_world.GetECSWorld().DestroySystem(m_HandleDamage);
         m_world.GetECSWorld().DestroySystem(m_UpdatePresentationRootTransform);
-        //m_world.GetECSWorld().DestroySystem(m_UpdatePresentationAttachmentTransform);
         m_world.GetECSWorld().DestroySystem(m_ApplyPresentationState);
     }
 
@@ -312,10 +215,6 @@ public class CharacterModuleServer : CharacterModuleShared
         m_HandleCharacterSpawnRequests.Update();
     }
 
-    //public void HandleDamage() {
-    //    m_HandleDamage.Update();
-    //}
-
     public void PresentationUpdate() {
         m_UpdateCharPresentationState.Update();
         m_ApplyPresentationState.Update();
@@ -323,7 +222,6 @@ public class CharacterModuleServer : CharacterModuleShared
 
     public void AttachmentUpdate() {
         m_UpdatePresentationRootTransform.Update();
-        //m_UpdatePresentationAttachmentTransform.Update();
     }
 
     public void CleanupPlayer(PlayerState player) {
@@ -338,8 +236,5 @@ public class CharacterModuleServer : CharacterModuleShared
     readonly UpdateCharPresentationState m_UpdateCharPresentationState;
     readonly ApplyPresentationState m_ApplyPresentationState;
 
-    //readonly HandleDamage m_HandleDamage;
-
     readonly UpdatePresentationRootTransform m_UpdatePresentationRootTransform;
-    //readonly UpdatePresentationAttachmentTransform m_UpdatePresentationAttachmentTransform;
 }

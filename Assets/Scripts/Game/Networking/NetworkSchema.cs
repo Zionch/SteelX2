@@ -492,7 +492,7 @@ unsafe public class NetworkSchema
         this.id = id;
     }
 
-    // TODO (peter) Should this be in words?
+    // TODO Should this be in words?
     public int GetByteSize() {
         return nextFieldOffset;
     }

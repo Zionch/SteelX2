@@ -79,7 +79,7 @@ public class NetworkEvent
                     eventTypesIn.Add(typeId, eventType);
             }
 
-            // TODO (petera) do we need to Create an info (as we are just releasing it right after?)
+            // TODO do we need to Create an info (as we are just releasing it right after?)
             var type = eventTypesIn[typeId];
             var info = Create(type);
             NetworkSchema.CopyFieldsToBuffer(type.schema, ref input, info.data);

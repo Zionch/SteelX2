@@ -44,8 +44,7 @@ public class PreviewGameMode : BaseComponentSystem
             var charPresentationState = m_world.GetEntityManager().GetComponentData<CharacterInterpolatedData>(m_Player.controlledEntity);
             m_SpawnPos = charPresentationState.position;
             m_SpawnRot = Quaternion.Euler(0f, charPresentationState.rotation, 0f);
-        } //else
-        //    FindSpawnTransform();
+        }
 
         // Despawn old controlled
         if (m_Player.controlledEntity != Entity.Null) {
@@ -58,19 +57,6 @@ public class PreviewGameMode : BaseComponentSystem
 
         CharacterSpawnRequest.Create(PostUpdateCommands, charControl.RequestedMechSettings, m_SpawnPos, m_SpawnRot, playerEntity);
     }
-
-    void FindSpawnTransform() {
-        // Find random spawnpoint that matches teamIndex
-        //var spawnpoints = Object.FindObjectsOfType<SpawnPoint>();
-        //var offset = UnityEngine.Random.Range(0, spawnpoints.Length);
-        //for (var i = 0; i < spawnpoints.Length; ++i) {
-        //    var sp = spawnpoints[(i + offset) % spawnpoints.Length];
-        //    if (sp.teamIndex != m_Player.teamIndex) continue;
-        //    m_SpawnPos = sp.transform.position;
-        //    m_SpawnRot = sp.transform.rotation;
-        //    return;
-        //}
-    }
 }
 
 
@@ -80,11 +66,6 @@ public class PreviewGameLoop : Game.IGameLoop
         m_StateMachine = new StateMachine<PreviewState>();
         m_StateMachine.Add(PreviewState.Loading, null, UpdateLoadingState, null);
         m_StateMachine.Add(PreviewState.Active, EnterActiveState, UpdateStateActive, LeaveActiveState);
-
-        Console.AddCommand("nextchar", CmdNextHero, "Select next character", GetHashCode());
-        Console.AddCommand("nextteam", CmdNextTeam, "Select next character", GetHashCode());
-        Console.AddCommand("spectator", CmdSpectatorCam, "Select spectator cam", GetHashCode());
-        Console.AddCommand("respawn", CmdRespawn, "Force a respawn. Optional argument defines now many seconds untill respawn", this.GetHashCode());
 
         Console.SetOpen(false);
 
@@ -134,9 +115,6 @@ public class PreviewGameLoop : Game.IGameLoop
         m_CharacterModule = new CharacterModulePreview(m_GameWorld, m_resourceSystem);
         m_PlayerModuleClient = new PlayerModuleClient(m_GameWorld);
         m_PlayerModuleServer = new PlayerModuleServer(m_GameWorld, m_resourceSystem);
-        //m_EffectModule = new EffectModuleClient(m_GameWorld, m_resourceSystem);
-
-        //m_moverUpdate = m_GameWorld.GetECSWorld().CreateSystem<MoverUpdate>(m_GameWorld);
 
         m_UpdateReplicatedOwnerFlag = m_GameWorld.GetECSWorld().CreateSystem<UpdateReplicatedOwnerFlag>(m_GameWorld);
 
@@ -174,10 +152,6 @@ public class PreviewGameLoop : Game.IGameLoop
 
         if (gameTime.tickRate != Game.serverTickRate.IntValue)
             gameTime.tickRate = Game.serverTickRate.IntValue;
-
-        //if (Game.Input.GetKeyUp(KeyCode.H) && Game.allowCharChange.IntValue == 1) {
-        //    CmdNextHero(null);
-        //}
 
         bool commandWasConsumed = false;
         while (Game.frameTime > m_GameWorld.nextTickTime) {
@@ -217,7 +191,7 @@ public class PreviewGameLoop : Game.IGameLoop
         m_PlayerModuleClient.RetrieveCommand(m_GameWorld.WorldTime.tick);
 
         // Handle spawn
-        m_CharacterModule.HandleSpawns(); ; // TODO (mogensh) creates presentations, so it needs to be done first. Find better solution for ordering
+        m_CharacterModule.HandleSpawns(); ; // TODO creates presentations, so it needs to be done first. Find better solution for ordering
       
         m_PlayerModuleClient.HandleSpawn();
       
@@ -246,7 +220,7 @@ public class PreviewGameLoop : Game.IGameLoop
     }
 
     public void LateUpdate() {
-        // TODO (petera) Should the state machine actually have a lateupdate so we don't have to do this always?
+        // TODO Should the state machine actually have a lateupdate so we don't have to do this always?
         if (m_StateMachine.CurrentState() == PreviewState.Active) {
             m_GameWorld.frameDuration = Time.deltaTime;
 
@@ -261,61 +235,6 @@ public class PreviewGameLoop : Game.IGameLoop
 
             // Finalize jobs that needs to be done before rendering
         }
-    }
-
-    void CmdNextHero(string[] args) {
-        //if (m_Player == null)
-        //    return;
-
-        //if (Game.allowCharChange.IntValue != 1)
-        //    return;
-
-        //var charSetupRegistry = m_resourceSystem.GetResourceRegistry<HeroTypeRegistry>();
-        //var charSetupCount = charSetupRegistry.entries.Count;
-
-        //var playerEntity = m_Player.gameObject.GetComponent<GameObjectEntity>().Entity;
-        //var charControl = m_GameWorld.GetEntityManager().GetComponentObject<PlayerCharacterControl>(playerEntity);
-
-        //charControl.requestedCharacterType = charControl.characterType + 1;
-        //if (charControl.requestedCharacterType >= charSetupCount)
-        //    charControl.requestedCharacterType = 0;
-
-        //GameDebug.Log(string.Format("PreviewGameLoop. Requesting char:{0}", charControl.requestedCharacterType));
-    }
-
-    void CmdSpectatorCam(string[] args) {
-        //if (m_Player == null)
-        //    return;
-
-        //if (Game.allowCharChange.IntValue != 1)
-        //    return;
-
-        //var playerEntity = m_Player.gameObject.GetComponent<GameObjectEntity>().Entity;
-        //var charControl = m_GameWorld.GetEntityManager().GetComponentObject<PlayerCharacterControl>(playerEntity);
-
-        //// Until we have better way of controlling other units than character, the spectator cam gets type 1000         
-        //charControl.requestedCharacterType = 1000;
-    }
-
-    void CmdRespawn(string[] args) {
-        //if (m_Player == null)
-        //    return;
-
-        //m_previewGameMode.respawnDelay = args.Length == 0 ? 3 : int.Parse(args[0]);
-
-        //var healthState = m_GameWorld.GetEntityManager().GetComponentData<HealthStateData>(m_Player.controlledEntity);
-        //healthState.health = 0;
-        //m_GameWorld.GetEntityManager().SetComponentData(m_Player.controlledEntity, healthState);
-    }
-
-
-    void CmdNextTeam(string[] args) {
-        if (m_Player == null)
-            return;
-
-        m_Player.teamIndex++;
-        if (m_Player.teamIndex > 1)
-            m_Player.teamIndex = 0;
     }
 
     enum PreviewState
